@@ -50,6 +50,28 @@ third-party monitoring systems.
 - Return sanitized errors to clients; do not expose stack traces, internal identifiers, or policy
   details.
 
+## Server-only administrative access
+
+Administrative and operational database actions must run only in trusted server-side jobs or route
+handlers after explicit authorization. An `operations` value in a profile is not a database role and
+does not grant broader RLS access through the browser or a user-session client.
+
+Supabase secret and legacy `service_role` keys bypass row-level security and therefore require all of
+the following controls:
+
+- Store them only in the deployment secret manager under a server-only environment variable. Never
+  use a `NEXT_PUBLIC_` name, send the value to a browser, commit it, log it, or include it in errors.
+- Create a separate privileged client only inside the specific server-side operation that needs it.
+  Do not export a shared privileged client or use it in ordinary user-scoped request code.
+- Authenticate the caller and authorize the exact administrative action before creating or invoking
+  that client. Never rely only on a client-provided role or profile field.
+- Keep the operation narrowly scoped, validate inputs, and emit a content-free audit event containing
+  the actor, action, opaque target identifier, outcome, and timestamp.
+- Prefer a user-session client governed by RLS whenever bypass access is not strictly necessary.
+
+Tests and local development must use synthetic records. Privileged keys from production must never be
+used outside their approved production environment.
+
 ## Security verification before merge
 
 Test authentication, allowed role/resource combinations, denied role/resource combinations, tenant

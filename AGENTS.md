@@ -59,3 +59,26 @@ for their own directories but must not weaken the privacy, security, or clinical
 
 Read `docs/architecture.md`, `docs/security.md`, and `docs/clinical-safety.md` before changing their
 respective areas.
+
+## Task execution template
+
+Use the following contract before starting every implementation task. Replace
+`<PASTE THE DAY TASK HERE>` with exactly one concrete task. If the placeholder has not been replaced,
+do not infer or implement a task; request the missing task description.
+
+```text
+You are implementing exactly one task in an existing healthcare application.
+1. First read AGENTS.md, docs/architecture.md, docs/security.md and the files relevant to this task.
+2. Do not redesign unrelated modules or rename public APIs unless the task requires it.
+3. Keep patient/doctor data private-by-default. Do not log message bodies, symptoms, prescriptions,
+   tokens or secrets.
+4. Use strict TypeScript, Zod validation and database migrations where applicable.
+5. Add/update automated tests for the behavior you change.
+6. Run the narrow tests first, then lint/typecheck/build if available.
+7. Before finishing, review your own diff for auth bypass, broken RLS assumptions, insecure storage
+   URLs and accidental sensitive logging.
+8. Return: summary, files changed, migration notes, commands run, tests, and remaining risks.
+
+Implement ONLY the task below:
+<PASTE THE DAY TASK HERE>
+```
