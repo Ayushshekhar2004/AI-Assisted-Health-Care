@@ -12,3 +12,29 @@ main {
   max-width: 64rem;
   padding: 4rem 1.5rem;
 }
+
+.auth-card {
+  margin: 4rem auto;
+  max-width: 28rem;
+  padding: 0 1.5rem;
+}
+
+.auth-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.auth-form label {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.auth-form input,
+.auth-form button {
+  font: inherit;
+  padding: 0.7rem;
+}
+
+.auth-message {
+  min-height: 1.5rem;
+}

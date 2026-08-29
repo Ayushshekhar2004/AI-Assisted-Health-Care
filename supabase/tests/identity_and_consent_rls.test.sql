@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(23);
+select plan(30);
 
 insert into auth.users (
   id,
@@ -71,6 +71,30 @@ values
     now()
   );
 
+select is(
+  (
+    select count(*)
+    from public.profiles
+    where auth_user_id in (
+      '10000000-0000-0000-0000-000000000001',
+      '10000000-0000-0000-0000-000000000002',
+      '10000000-0000-0000-0000-000000000003',
+      '10000000-0000-0000-0000-000000000004'
+    )
+      and role = 'patient'
+  ),
+  4::bigint,
+  'new auth users are provisioned as patients only'
+);
+
+delete from public.profiles
+where auth_user_id in (
+  '10000000-0000-0000-0000-000000000001',
+  '10000000-0000-0000-0000-000000000002',
+  '10000000-0000-0000-0000-000000000003',
+  '10000000-0000-0000-0000-000000000004'
+);
+
 insert into public.profiles (id, auth_user_id, role)
 values
   ('20000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001', 'patient'),
@@ -127,6 +151,98 @@ select is(
   (select count(*) from public.consent_records),
   0::bigint,
   'patient cannot see another patient consent'
+);
+
+select throws_ok(
+  $$
+    select public.complete_patient_onboarding(
+      'hi',
+      '1990-05-20',
+      null,
+      'Synthetic City',
+      null,
+      null,
+      false,
+      true
+    )
+  $$,
+  '23514',
+  'Required consent was not granted',
+  'onboarding requires both consent decisions'
+);
+
+select lives_ok(
+  $$
+    select public.complete_patient_onboarding(
+      'hi',
+      '1990-05-20',
+      null,
+      'Synthetic City',
+      'Synthetic Contact',
+      '+911234567890',
+      true,
+      true
+    )
+  $$,
+  'patient can complete own onboarding'
+);
+
+select results_eq(
+  $$
+    select
+      preferred_language::text,
+      date_of_birth::text,
+      coalesce(gender::text, ''),
+      city,
+      emergency_contact_name,
+      emergency_contact_phone,
+      onboarding_completed_at is not null
+    from public.patients
+  $$,
+  $$
+    values (
+      'hi',
+      '1990-05-20',
+      '',
+      'Synthetic City',
+      'Synthetic Contact',
+      '+911234567890',
+      true
+    )
+  $$,
+  'onboarding fields are stored on the patient record'
+);
+
+select results_eq(
+  $$
+    select consent_type::text, policy_version, effective_at is not null
+    from public.consent_records
+    order by consent_type
+  $$,
+  $$
+    values
+      ('intake_processing', 'intake-processing-v1', true),
+      ('teleconsultation', 'teleconsultation-v1', true)
+  $$,
+  'versioned consent decisions are stored separately with timestamps'
+);
+
+select throws_ok(
+  $$
+    select public.complete_patient_onboarding(
+      'en',
+      '1990-05-20',
+      'prefer_not_to_say',
+      'Synthetic City',
+      null,
+      null,
+      true,
+      true
+    )
+  $$,
+  '42501',
+  'Patient onboarding is unavailable',
+  'completed onboarding cannot be replayed'
 );
 
 select results_eq(
@@ -207,6 +323,23 @@ select is_empty(
     returning id
   $$,
   'doctor cannot update patient records'
+);
+select throws_ok(
+  $$
+    select public.complete_patient_onboarding(
+      'en',
+      '1985-04-10',
+      null,
+      'Synthetic City',
+      null,
+      null,
+      true,
+      true
+    )
+  $$,
+  '42501',
+  'Patient onboarding is unavailable',
+  'doctor cannot complete patient onboarding'
 );
 
 reset role;
