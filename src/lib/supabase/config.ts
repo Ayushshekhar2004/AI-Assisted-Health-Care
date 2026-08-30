@@ -1,19 +1,16 @@
 import { z } from 'zod';
 
 const supabaseConfigSchema = z.object({
-  url: z
-    .string()
-    .url()
-    .refine((url) => url.startsWith('https://'), {
-      message: 'Supabase URL must use HTTPS',
-    }),
+  url: z.string().url().refine(isSecureOrLoopbackUrl, {
+    message: 'Supabase URL must use HTTPS or loopback HTTP',
+  }),
   publishableKey: z.string().min(1, 'Supabase publishable key is required'),
-  siteUrl: z.string().url().refine(isSecureApplicationUrl, {
+  siteUrl: z.string().url().refine(isSecureOrLoopbackUrl, {
     message: 'Site URL must use HTTPS or loopback HTTP',
   }),
 });
 
-function isSecureApplicationUrl(value: string): boolean {
+export function isSecureOrLoopbackUrl(value: string): boolean {
   const url = new URL(value);
   const isLoopback =
     url.hostname === 'localhost' || url.hostname === '127.0.0.1';

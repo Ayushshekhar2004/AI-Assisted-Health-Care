@@ -53,4 +53,14 @@ describe('parseSupabaseConfig', () => {
       }),
     ).toThrow();
   });
+
+  it('allows a loopback HTTP Supabase URL for local development', () => {
+    expect(
+      parseSupabaseConfig({
+        url: 'http://127.0.0.1:54321',
+        publishableKey: 'sb_publishable_synthetic',
+        siteUrl: 'http://localhost:3000',
+      }).url,
+    ).toBe('http://127.0.0.1:54321');
+  });
 });
