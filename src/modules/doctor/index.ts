@@ -9,3 +9,10 @@ export type {
   DoctorVerificationState,
   VerificationDecision,
 } from './verification-validation';
+export {
+  DEFAULT_PILOT_SPECIALTY,
+  PILOT_SPECIALTY_CODES,
+  PILOT_SPECIALTY_LABELS,
+  pilotSpecialtySchema,
+} from './specialties';
+export type { PilotSpecialty } from './specialties';

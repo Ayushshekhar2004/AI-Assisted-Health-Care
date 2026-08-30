@@ -94,6 +94,12 @@ export async function getIntakeSummaryForHandoff(
 ): Promise<z.infer<typeof intakeStructuredOutputSchema> | null> {
   const sessionId = parseIntakeSessionId(sessionIdInput);
   const { supabase } = await createAuthorizedPatientClient();
+  const session = await supabase
+    .from('intake_sessions')
+    .select('id')
+    .eq('id', sessionId)
+    .maybeSingle();
+  if (session.error || !session.data) throw new Error('Intake is unavailable');
   const { data, error } = await supabase
     .from('intake_structured')
     .select('structured_data')

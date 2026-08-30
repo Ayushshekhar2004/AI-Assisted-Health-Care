@@ -9,6 +9,11 @@ import {
 } from '@/modules/intake/server';
 
 import { evaluateRedFlags } from './evaluate';
+import { OpenAISpecialtyRoutingModel } from './openai-routing-model';
+import {
+  routeIntakeToSpecialty,
+  type SpecialtyRoutingServiceResult,
+} from './routing';
 import { parseEmergencyScreeningAnswers } from './screening';
 
 const activeRedFlagSchema = z.object({
@@ -150,4 +155,45 @@ export async function recordEmergencyPathwayEntry(
     p_triage_result_id: resultId,
   });
   if (error) throw new Error('Triage is unavailable');
+}
+
+export async function routeAndStoreIntakeSpecialty(
+  intakeSessionId: unknown,
+): Promise<SpecialtyRoutingServiceResult> {
+  const sessionId = z.string().uuid().parse(intakeSessionId);
+  const { supabase, userId } = await createAuthorizedPatientClient();
+  const [structuredIntake, redFlagResult] = await Promise.all([
+    getIntakeSummaryForHandoff(sessionId),
+    supabase
+      .from('triage_results')
+      .select('id')
+      .eq('intake_session_id', sessionId)
+      .eq('outcome', 'RED_FLAG')
+      .limit(1)
+      .maybeSingle(),
+  ]);
+  if (redFlagResult.error) throw new Error('Routing is unavailable');
+
+  const routing = await routeIntakeToSpecialty(
+    new OpenAISpecialtyRoutingModel(),
+    {
+      structuredIntake: structuredIntake ?? emptyStructuredIntake,
+      redFlagDetected: Boolean(redFlagResult.data),
+    },
+  );
+
+  const privileged = createPrivilegedClient();
+  const { error } = await privileged.rpc('record_specialty_routing_result', {
+    p_actor_user_id: userId,
+    p_intake_session_id: sessionId,
+    p_model_name: routing.modelName,
+    p_model_output: routing.modelOutput,
+    p_model_version: routing.modelVersion,
+    p_prompt_version: routing.promptVersion,
+    p_routing_policy_version: routing.routingPolicyVersion,
+    p_routing_result: routing.routingResult,
+    p_routing_schema_version: routing.routingSchemaVersion,
+  });
+  if (error) throw new Error('Routing is unavailable');
+  return routing;
 }
