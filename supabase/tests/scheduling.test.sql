@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(28);
+select plan(29);
 
 insert into auth.users (
   id,
@@ -377,6 +377,43 @@ select throws_ok(
   '22023',
   'Availability is unavailable',
   'doctor cannot delete another doctor availability'
+);
+
+reset role;
+
+insert into public.intake_sessions (id, patient_id)
+values (
+  '71000000-0000-0000-0000-000000000001',
+  '31000000-0000-0000-0000-000000000001'
+);
+insert into public.triage_results (
+  intake_session_id,
+  rule_set_version,
+  outcome,
+  matched_rule_codes
+)
+values (
+  '71000000-0000-0000-0000-000000000001',
+  'red-flags-v1.0.0',
+  'RED_FLAG',
+  array['SEVERE_TRAUMA']
+);
+insert into public.doctor_availability (id, doctor_id, starts_at, ends_at)
+values (
+  '61000000-0000-0000-0000-000000000099',
+  '51000000-0000-0000-0000-000000000003',
+  now() + interval '12 days',
+  now() + interval '12 days 30 minutes'
+);
+
+set local role authenticated;
+set local request.jwt.claim.sub = '11000000-0000-0000-0000-000000000001';
+
+select throws_ok(
+  $$ select public.request_appointment('61000000-0000-0000-0000-000000000099') $$,
+  '42501',
+  'Emergency pathway required',
+  'database blocks normal doctor routing after a red flag'
 );
 
 reset role;

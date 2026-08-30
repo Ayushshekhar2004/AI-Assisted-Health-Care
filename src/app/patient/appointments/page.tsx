@@ -1,10 +1,12 @@
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 
 import { LocalDateTime } from '@/app/_components/local-date-time';
 import {
   listBookableSlots,
   listOwnPatientAppointments,
 } from '@/modules/scheduling/server';
+import { getActiveRedFlag } from '@/modules/triage/server';
 
 import { BookingForm } from './booking-form';
 
@@ -15,6 +17,30 @@ function formatFee(feePaise: number | null): string {
 }
 
 export default async function PatientAppointmentsPage() {
+  try {
+    if (await getActiveRedFlag()) redirect('/patient/emergency');
+  } catch (error) {
+    // Next.js redirects are control-flow exceptions and must not be converted to a fallback page.
+    if (
+      typeof error === 'object' &&
+      error !== null &&
+      'digest' in error &&
+      typeof error.digest === 'string' &&
+      error.digest.startsWith('NEXT_REDIRECT')
+    ) {
+      throw error;
+    }
+    return (
+      <main>
+        <h1>Appointments</h1>
+        <p>Appointments are temporarily unavailable.</p>
+        <p>
+          <Link href="/patient">Back to patient area</Link>
+        </p>
+      </main>
+    );
+  }
+
   try {
     const [slots, appointments] = await Promise.all([
       listBookableSlots(),

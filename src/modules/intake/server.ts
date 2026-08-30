@@ -27,6 +27,7 @@ const intakeMessageSchema = z.object({
 
 export type IntakeSession = z.infer<typeof intakeSessionSchema>;
 export type IntakeMessage = z.infer<typeof intakeMessageSchema>;
+export type { IntakeStructuredOutput } from './index';
 
 async function createAuthorizedPatientClient() {
   const supabase = await createClient();
@@ -86,6 +87,20 @@ export async function listIntakeMessages(
       createdAt: message.created_at,
     })),
   );
+}
+
+export async function getIntakeSummaryForHandoff(
+  sessionIdInput: unknown,
+): Promise<z.infer<typeof intakeStructuredOutputSchema> | null> {
+  const sessionId = parseIntakeSessionId(sessionIdInput);
+  const { supabase } = await createAuthorizedPatientClient();
+  const { data, error } = await supabase
+    .from('intake_structured')
+    .select('structured_data')
+    .eq('intake_session_id', sessionId)
+    .maybeSingle();
+  if (error) throw new Error('Intake is unavailable');
+  return data ? intakeStructuredOutputSchema.parse(data.structured_data) : null;
 }
 
 export async function startIntakeSession(): Promise<void> {

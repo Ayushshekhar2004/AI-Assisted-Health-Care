@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 
 import { bookAvailability } from '@/modules/scheduling/server';
+import { getActiveRedFlag } from '@/modules/triage/server';
 
 export type BookingActionState = Readonly<{
   message: string;
@@ -17,6 +18,13 @@ export async function bookAvailabilityAction(
   formData: FormData,
 ): Promise<BookingActionState> {
   try {
+    if (await getActiveRedFlag()) {
+      return {
+        message:
+          'Online appointment routing is paused. Follow the emergency pathway now.',
+        status: 'error',
+      };
+    }
     // The browser supplies only an opaque slot ID. Patient, doctor, times, and fee are
     // derived again inside the authenticated database transaction.
     await bookAvailability(formData.get('availabilityId'));

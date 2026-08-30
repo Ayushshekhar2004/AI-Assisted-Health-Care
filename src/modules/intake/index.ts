@@ -2,6 +2,7 @@ export { parseIntakeMessage, parseIntakeSessionId } from './validation';
 export {
   INTAKE_ORCHESTRATOR_INSTRUCTIONS,
   INTAKE_STRUCTURED_SCHEMA_VERSION,
+  intakeFieldSchema,
   intakeStructuredOutputFormatSchema,
   intakeStructuredOutputSchema,
 } from './structured-output';

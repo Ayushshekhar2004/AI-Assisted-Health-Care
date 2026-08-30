@@ -4,22 +4,50 @@ import {
   getActiveIntakeSession,
   listIntakeMessages,
 } from '@/modules/intake/server';
+import {
+  getActiveRedFlag,
+  getLatestTriageResultForSession,
+} from '@/modules/triage/server';
 
 import { startIntakeAction } from './actions';
+import { EmergencyScreeningForm } from './emergency-screening-form';
 import { IntakeChat } from './intake-chat';
 import { IntakeSafetyBanner } from './intake-safety-banner';
 
 export default async function PatientIntakePage() {
   try {
+    const activeRedFlag = await getActiveRedFlag();
+    if (activeRedFlag) {
+      return (
+        <main>
+          <h1>Patient intake</h1>
+          <section className="emergency-guidance" role="alert">
+            <h2>Emergency warning sign recorded</h2>
+            <p>
+              Normal intake and doctor routing are paused. Seek urgent in-person
+              or emergency care now. This app cannot rule out an emergency.
+            </p>
+            <Link href="/patient/emergency">
+              Continue to emergency and referral guidance
+            </Link>
+          </section>
+        </main>
+      );
+    }
     const session = await getActiveIntakeSession();
     const messages = session ? await listIntakeMessages(session.id) : [];
+    const latestTriage = session
+      ? await getLatestTriageResultForSession(session.id)
+      : null;
 
     return (
       <main>
         <h1>Patient intake</h1>
         <IntakeSafetyBanner />
-        {session ? (
+        {session && latestTriage?.outcome === 'NO_RED_FLAG' ? (
           <IntakeChat messages={messages} sessionId={session.id} />
+        ) : session ? (
+          <EmergencyScreeningForm sessionId={session.id} />
         ) : (
           <form action={startIntakeAction}>
             <p>Start a private intake session when you are ready.</p>
