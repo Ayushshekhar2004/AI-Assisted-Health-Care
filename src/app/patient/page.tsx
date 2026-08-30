@@ -12,6 +12,9 @@ export default function PatientHomePage() {
       <p>
         <Link href="/patient/appointments">Browse appointments</Link>
       </p>
+      <p>
+        <Link href="/patient/intake">Start patient intake</Link>
+      </p>
       <form action={logoutAction}>
         <button type="submit">Sign out</button>
       </form>
