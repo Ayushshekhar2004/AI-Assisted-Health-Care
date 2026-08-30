@@ -8,7 +8,9 @@ describe('parseServerEnvironment', () => {
   });
 
   it('accepts supported environments', () => {
-    expect(parseServerEnvironment({ NODE_ENV: 'test' })).toEqual({ NODE_ENV: 'test' });
+    expect(parseServerEnvironment({ NODE_ENV: 'test' })).toEqual({
+      NODE_ENV: 'test',
+    });
   });
 
   it('rejects unsupported environments', () => {

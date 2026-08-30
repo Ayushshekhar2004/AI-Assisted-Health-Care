@@ -7,7 +7,10 @@ import {
   type DoctorOnboardingActionState,
 } from './actions';
 
-const initialState: DoctorOnboardingActionState = { message: '', status: 'idle' };
+const initialState: DoctorOnboardingActionState = {
+  message: '',
+  status: 'idle',
+};
 
 export function DoctorOnboardingForm() {
   const [state, formAction, pending] = useActionState(
@@ -54,22 +57,41 @@ export function DoctorOnboardingForm() {
 
       <label>
         Teleconsultation fee in INR (placeholder, optional)
-        <input inputMode="decimal" name="teleconsultationFee" placeholder="750.00" />
+        <input
+          inputMode="decimal"
+          name="teleconsultationFee"
+          placeholder="750.00"
+        />
       </label>
       <label>
         Clinic city (optional)
-        <input autoComplete="address-level2" maxLength={120} name="clinicCity" />
+        <input
+          autoComplete="address-level2"
+          maxLength={120}
+          name="clinicCity"
+        />
       </label>
       <label>
         Clinic address (optional)
-        <textarea autoComplete="street-address" maxLength={500} name="clinicAddress" />
+        <textarea
+          autoComplete="street-address"
+          maxLength={500}
+          name="clinicAddress"
+        />
       </label>
       <label>
         Profile photo (optional, JPEG, PNG, or WebP; maximum 5 MB)
-        <input accept="image/jpeg,image/png,image/webp" name="profilePhoto" type="file" />
+        <input
+          accept="image/jpeg,image/png,image/webp"
+          name="profilePhoto"
+          type="file"
+        />
       </label>
 
-      <p>Your profile will remain pending verification and unavailable for booking.</p>
+      <p>
+        Your profile will remain pending verification and unavailable for
+        booking.
+      </p>
       <button disabled={pending} type="submit">
         {pending ? 'Saving…' : 'Submit for verification'}
       </button>

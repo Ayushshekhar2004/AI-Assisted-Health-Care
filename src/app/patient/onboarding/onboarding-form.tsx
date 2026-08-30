@@ -7,12 +7,18 @@ import {
   TELECONSULTATION_CONSENT_VERSION,
 } from '@/modules/patient';
 
-import { completeOnboardingAction, type OnboardingActionState } from './actions';
+import {
+  completeOnboardingAction,
+  type OnboardingActionState,
+} from './actions';
 
 const initialState: OnboardingActionState = { message: '', status: 'idle' };
 
 export function OnboardingForm() {
-  const [state, formAction, pending] = useActionState(completeOnboardingAction, initialState);
+  const [state, formAction, pending] = useActionState(
+    completeOnboardingAction,
+    initialState,
+  );
 
   return (
     <form action={formAction} className="auth-form">
@@ -42,7 +48,12 @@ export function OnboardingForm() {
 
       <label>
         City
-        <input autoComplete="address-level2" maxLength={120} name="city" required />
+        <input
+          autoComplete="address-level2"
+          maxLength={120}
+          name="city"
+          required
+        />
       </label>
 
       <fieldset>
@@ -50,7 +61,11 @@ export function OnboardingForm() {
         <p>Provide both fields or leave both blank.</p>
         <label>
           Contact name
-          <input autoComplete="name" maxLength={120} name="emergencyContactName" />
+          <input
+            autoComplete="name"
+            maxLength={120}
+            name="emergencyContactName"
+          />
         </label>
         <label>
           Contact phone
@@ -67,12 +82,13 @@ export function OnboardingForm() {
       <fieldset>
         <legend>Consent</legend>
         <label>
-          <input name="teleconsultationConsent" required type="checkbox" />
-          I consent to teleconsultation under policy {TELECONSULTATION_CONSENT_VERSION}.
+          <input name="teleconsultationConsent" required type="checkbox" />I
+          consent to teleconsultation under policy{' '}
+          {TELECONSULTATION_CONSENT_VERSION}.
         </label>
         <label>
-          <input name="intakeProcessingConsent" required type="checkbox" />
-          I consent to processing my intake information under policy{' '}
+          <input name="intakeProcessingConsent" required type="checkbox" />I
+          consent to processing my intake information under policy{' '}
           {INTAKE_PROCESSING_CONSENT_VERSION}.
         </label>
       </fieldset>

@@ -5,7 +5,9 @@ export default function AdminHomePage() {
   return (
     <main>
       <h1>Operations area</h1>
-      <p>Administrative actions run through authorized server-only workflows.</p>
+      <p>
+        Administrative actions run through authorized server-only workflows.
+      </p>
       <p>
         <Link href="/admin/doctors">Review doctor verification queue</Link>
       </p>

@@ -17,7 +17,11 @@ export function getRoleHome(role: ProfileRole): string {
 }
 
 export function getSafeRedirectPath(value: unknown, fallback: string): string {
-  if (typeof value !== 'string' || !value.startsWith('/') || value.startsWith('//')) {
+  if (
+    typeof value !== 'string' ||
+    !value.startsWith('/') ||
+    value.startsWith('//')
+  ) {
     return fallback;
   }
 

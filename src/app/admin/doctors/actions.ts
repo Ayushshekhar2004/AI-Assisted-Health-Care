@@ -2,9 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 
-import {
-  transitionDoctorVerification,
-} from '@/modules/doctor/server';
+import { transitionDoctorVerification } from '@/modules/doctor/server';
 import { verificationDecisionSchema } from '@/modules/doctor';
 
 export type VerificationActionState = Readonly<{
@@ -12,7 +10,8 @@ export type VerificationActionState = Readonly<{
   status: 'idle' | 'error' | 'success';
 }>;
 
-const genericVerificationError = 'Unable to update verification. Review the request and try again.';
+const genericVerificationError =
+  'Unable to update verification. Review the request and try again.';
 
 export async function verifyDoctorAction(
   _state: VerificationActionState,

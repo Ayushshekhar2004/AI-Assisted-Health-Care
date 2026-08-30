@@ -4,7 +4,11 @@ import { z } from 'zod';
 
 import { getSupabaseConfig } from '@/lib/supabase/config';
 import { createClient } from '@/lib/supabase/server';
-import { getCurrentRole, getRoleHome, getSafeRedirectPath } from '@/modules/auth';
+import {
+  getCurrentRole,
+  getRoleHome,
+  getSafeRedirectPath,
+} from '@/modules/auth';
 
 const callbackSchema = z.object({
   code: z.string().min(1).max(4096),
@@ -25,7 +29,9 @@ export async function GET(request: NextRequest) {
   let destination = '/auth/login';
   try {
     const supabase = await createClient();
-    const { error } = await supabase.auth.exchangeCodeForSession(parsed.data.code);
+    const { error } = await supabase.auth.exchangeCodeForSession(
+      parsed.data.code,
+    );
 
     if (!error) {
       const role = await getCurrentRole();

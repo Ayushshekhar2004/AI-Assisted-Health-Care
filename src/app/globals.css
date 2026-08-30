@@ -38,3 +38,16 @@ main {
 .auth-message {
   min-height: 1.5rem;
 }
+
+.scheduling-list {
+  display: grid;
+  gap: 1rem;
+  list-style: none;
+  padding: 0;
+}
+
+.scheduling-list > li {
+  border: 1px solid currentColor;
+  border-radius: 0.5rem;
+  padding: 1rem;
+}

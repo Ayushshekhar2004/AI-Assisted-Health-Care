@@ -4,7 +4,10 @@ import { z } from 'zod';
 
 const adminConfigSchema = z.object({
   secretKey: z.string().min(20),
-  url: z.string().url().refine((url) => url.startsWith('https://')),
+  url: z
+    .string()
+    .url()
+    .refine((url) => url.startsWith('https://')),
 });
 
 export function getSupabaseAdminConfig() {

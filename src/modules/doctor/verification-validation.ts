@@ -16,4 +16,6 @@ export const doctorVerificationStateSchema = z.object({
   onboardingCompletedAt: z.string().nullable(),
 });
 
-export type DoctorVerificationState = z.infer<typeof doctorVerificationStateSchema>;
+export type DoctorVerificationState = z.infer<
+  typeof doctorVerificationStateSchema
+>;

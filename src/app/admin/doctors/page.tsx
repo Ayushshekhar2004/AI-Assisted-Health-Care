@@ -25,8 +25,12 @@ export default async function DoctorVerificationQueuePage() {
   return (
     <main>
       <h1>Doctor verification queue</h1>
-      <p>Review professional credentials before approving or rejecting a doctor.</p>
-      {queue.length === 0 ? <p>No doctors are waiting for verification.</p> : null}
+      <p>
+        Review professional credentials before approving or rejecting a doctor.
+      </p>
+      {queue.length === 0 ? (
+        <p>No doctors are waiting for verification.</p>
+      ) : null}
       {queue.map((doctor) => (
         <article key={doctor.id}>
           <h2>{doctor.fullName}</h2>
@@ -46,11 +50,14 @@ export default async function DoctorVerificationQueuePage() {
             <dd>{formatFee(doctor.teleconsultationFeePaise)}</dd>
             <dt>Clinic</dt>
             <dd>
-              {[doctor.clinicCity, doctor.clinicAddress].filter(Boolean).join(' · ') ||
-                'Not provided'}
+              {[doctor.clinicCity, doctor.clinicAddress]
+                .filter(Boolean)
+                .join(' · ') || 'Not provided'}
             </dd>
             <dt>Profile photo</dt>
-            <dd>{doctor.hasProfilePhoto ? 'Submitted privately' : 'Not provided'}</dd>
+            <dd>
+              {doctor.hasProfilePhoto ? 'Submitted privately' : 'Not provided'}
+            </dd>
           </dl>
           <VerificationForm doctorId={doctor.id} />
         </article>

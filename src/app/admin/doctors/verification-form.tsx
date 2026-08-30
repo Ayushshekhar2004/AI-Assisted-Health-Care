@@ -7,7 +7,10 @@ import { verifyDoctorAction, type VerificationActionState } from './actions';
 const initialState: VerificationActionState = { message: '', status: 'idle' };
 
 export function VerificationForm({ doctorId }: Readonly<{ doctorId: string }>) {
-  const [state, formAction, pending] = useActionState(verifyDoctorAction, initialState);
+  const [state, formAction, pending] = useActionState(
+    verifyDoctorAction,
+    initialState,
+  );
 
   return (
     <form action={formAction} className="auth-form">
@@ -17,10 +20,20 @@ export function VerificationForm({ doctorId }: Readonly<{ doctorId: string }>) {
         <textarea maxLength={500} minLength={5} name="reason" required />
       </label>
       <div>
-        <button disabled={pending} name="decision" type="submit" value="approved">
+        <button
+          disabled={pending}
+          name="decision"
+          type="submit"
+          value="approved"
+        >
           Approve
         </button>{' '}
-        <button disabled={pending} name="decision" type="submit" value="rejected">
+        <button
+          disabled={pending}
+          name="decision"
+          type="submit"
+          value="rejected"
+        >
           Reject
         </button>
       </div>

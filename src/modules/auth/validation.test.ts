@@ -12,7 +12,8 @@ describe('emailCredentialsSchema', () => {
 
   it('rejects malformed credentials', () => {
     expect(
-      emailCredentialsSchema.safeParse({ email: 'invalid', password: 'short' }).success,
+      emailCredentialsSchema.safeParse({ email: 'invalid', password: 'short' })
+        .success,
     ).toBe(false);
   });
 });

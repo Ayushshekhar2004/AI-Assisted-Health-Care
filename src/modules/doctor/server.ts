@@ -57,7 +57,9 @@ function createPrivilegedClient() {
   });
 }
 
-export async function listDoctorVerificationQueue(): Promise<DoctorVerificationQueueEntry[]> {
+export async function listDoctorVerificationQueue(): Promise<
+  DoctorVerificationQueueEntry[]
+> {
   await requireOperationsActor();
   const admin = createPrivilegedClient();
   const { data, error } = await admin
@@ -91,7 +93,9 @@ export async function listDoctorVerificationQueue(): Promise<DoctorVerificationQ
   );
 }
 
-export async function transitionDoctorVerification(input: VerificationDecision): Promise<void> {
+export async function transitionDoctorVerification(
+  input: VerificationDecision,
+): Promise<void> {
   const decision = verificationDecisionSchema.parse(input);
   const actorUserId = await requireOperationsActor();
   const admin = createPrivilegedClient();

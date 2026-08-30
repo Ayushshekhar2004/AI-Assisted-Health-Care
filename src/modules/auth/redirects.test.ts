@@ -16,9 +16,14 @@ describe('role routing', () => {
     );
   });
 
-  it.each(['https://attacker.example', '//attacker.example', '/\\attacker.example', 'patient', null])(
-    'rejects unsafe redirect %s',
-    (value) => expect(getSafeRedirectPath(value, '/patient')).toBe('/patient'),
+  it.each([
+    'https://attacker.example',
+    '//attacker.example',
+    '/\\attacker.example',
+    'patient',
+    null,
+  ])('rejects unsafe redirect %s', (value) =>
+    expect(getSafeRedirectPath(value, '/patient')).toBe('/patient'),
   );
 
   it.each(['/patient', '/patient/appointments', '/doctor', '/admin/users'])(

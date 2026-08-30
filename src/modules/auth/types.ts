@@ -9,6 +9,9 @@ export type AuthResult = Readonly<{ authenticated: boolean }>;
 
 export interface AuthAdapter {
   signInWithEmail(credentials: EmailCredentials): Promise<AuthResult>;
-  signUpWithEmail(credentials: EmailCredentials, options: EmailSignUpOptions): Promise<AuthResult>;
+  signUpWithEmail(
+    credentials: EmailCredentials,
+    options: EmailSignUpOptions,
+  ): Promise<AuthResult>;
   signOut(): Promise<void>;
 }

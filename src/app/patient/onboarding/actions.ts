@@ -3,14 +3,18 @@
 import { redirect } from 'next/navigation';
 
 import { createClient } from '@/lib/supabase/server';
-import { parsePatientOnboarding, type PatientOnboardingInput } from '@/modules/patient';
+import {
+  parsePatientOnboarding,
+  type PatientOnboardingInput,
+} from '@/modules/patient';
 
 export type OnboardingActionState = Readonly<{
   message: string;
   status: 'idle' | 'error';
 }>;
 
-const genericOnboardingError = 'Unable to save onboarding. Review the form and try again.';
+const genericOnboardingError =
+  'Unable to save onboarding. Review the form and try again.';
 
 export async function completeOnboardingAction(
   _state: OnboardingActionState,

@@ -5,7 +5,10 @@ import { useActionState } from 'react';
 import type { AuthActionState } from './actions';
 
 type AuthFormProps = Readonly<{
-  action: (state: AuthActionState, formData: FormData) => Promise<AuthActionState>;
+  action: (
+    state: AuthActionState,
+    formData: FormData,
+  ) => Promise<AuthActionState>;
   mode: 'login' | 'sign-up';
   nextPath?: string | undefined;
 }>;
@@ -34,7 +37,11 @@ export function AuthForm({ action, mode, nextPath }: AuthFormProps) {
       </label>
       {nextPath ? <input name="next" type="hidden" value={nextPath} /> : null}
       <button disabled={pending} type="submit">
-        {pending ? 'Please wait…' : isLogin ? 'Sign in' : 'Create patient account'}
+        {pending
+          ? 'Please wait…'
+          : isLogin
+            ? 'Sign in'
+            : 'Create patient account'}
       </button>
       <p aria-live="polite" className="auth-message" role="status">
         {state.message}

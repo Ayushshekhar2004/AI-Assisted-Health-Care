@@ -31,8 +31,12 @@ describe('parseDoctorOnboarding', () => {
   });
 
   it('rejects duplicate or unsupported languages', () => {
-    expect(() => parseDoctorOnboarding({ ...validInput, languages: ['en', 'en'] })).toThrow();
-    expect(() => parseDoctorOnboarding({ ...validInput, languages: ['fr'] })).toThrow();
+    expect(() =>
+      parseDoctorOnboarding({ ...validInput, languages: ['en', 'en'] }),
+    ).toThrow();
+    expect(() =>
+      parseDoctorOnboarding({ ...validInput, languages: ['fr'] }),
+    ).toThrow();
   });
 
   it('rejects malformed registration numbers and fees', () => {

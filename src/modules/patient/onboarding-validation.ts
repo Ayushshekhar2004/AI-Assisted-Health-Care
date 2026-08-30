@@ -2,7 +2,8 @@ import { z } from 'zod';
 
 const optionalText = (maximumLength: number) =>
   z.preprocess(
-    (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
+    (value) =>
+      typeof value === 'string' && value.trim() === '' ? undefined : value,
     z.string().trim().min(1).max(maximumLength).optional(),
   );
 
@@ -11,7 +12,9 @@ const dateOfBirthSchema = z
   .regex(/^\d{4}-\d{2}-\d{2}$/)
   .refine((value) => {
     const date = new Date(`${value}T00:00:00.000Z`);
-    return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
+    return (
+      !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value
+    );
   });
 
 const onboardingSchema = z
@@ -25,8 +28,13 @@ const onboardingSchema = z
     city: z.string().trim().min(1).max(120),
     emergencyContactName: optionalText(120),
     emergencyContactPhone: z.preprocess(
-      (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
-      z.string().trim().regex(/^\+[1-9]\d{7,14}$/).optional(),
+      (value) =>
+        typeof value === 'string' && value.trim() === '' ? undefined : value,
+      z
+        .string()
+        .trim()
+        .regex(/^\+[1-9]\d{7,14}$/)
+        .optional(),
     ),
     teleconsultationConsent: z.literal('on'),
     intakeProcessingConsent: z.literal('on'),

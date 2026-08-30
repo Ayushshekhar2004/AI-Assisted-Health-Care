@@ -15,10 +15,14 @@ export type DoctorOnboardingActionState = Readonly<{
   status: 'idle' | 'error';
 }>;
 
-const genericOnboardingError = 'Unable to save onboarding. Review the form and try again.';
+const genericOnboardingError =
+  'Unable to save onboarding. Review the form and try again.';
 const profilePhotoBucket = 'doctor-profile-photos';
 
-const photoExtensions: Record<'image/jpeg' | 'image/png' | 'image/webp', string> = {
+const photoExtensions: Record<
+  'image/jpeg' | 'image/png' | 'image/webp',
+  string
+> = {
   'image/jpeg': 'jpg',
   'image/png': 'png',
   'image/webp': 'webp',

@@ -17,7 +17,8 @@ export type AuthActionState = Readonly<{
   status: 'idle' | 'error' | 'success';
 }>;
 
-const genericAuthError = 'Unable to complete the request. Check your details and try again.';
+const genericAuthError =
+  'Unable to complete the request. Check your details and try again.';
 
 function parseCredentials(formData: FormData) {
   return emailCredentialsSchema.safeParse({
@@ -92,7 +93,8 @@ export async function signUpAction(
   }
 
   return {
-    message: 'If the address can be registered, check its inbox for the next step.',
+    message:
+      'If the address can be registered, check its inbox for the next step.',
     status: 'success',
   };
 }
