@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(30);
+select plan(47);
 
 insert into auth.users (
   id,
@@ -69,6 +69,19 @@ values
     '{}',
     now(),
     now()
+  ),
+  (
+    '10000000-0000-0000-0000-000000000005',
+    '00000000-0000-0000-0000-000000000000',
+    'authenticated',
+    'authenticated',
+    'doctor-two@example.invalid',
+    '',
+    now(),
+    '{}',
+    '{}',
+    now(),
+    now()
   );
 
 select is(
@@ -79,11 +92,12 @@ select is(
       '10000000-0000-0000-0000-000000000001',
       '10000000-0000-0000-0000-000000000002',
       '10000000-0000-0000-0000-000000000003',
-      '10000000-0000-0000-0000-000000000004'
+      '10000000-0000-0000-0000-000000000004',
+      '10000000-0000-0000-0000-000000000005'
     )
       and role = 'patient'
   ),
-  4::bigint,
+  5::bigint,
   'new auth users are provisioned as patients only'
 );
 
@@ -92,7 +106,8 @@ where auth_user_id in (
   '10000000-0000-0000-0000-000000000001',
   '10000000-0000-0000-0000-000000000002',
   '10000000-0000-0000-0000-000000000003',
-  '10000000-0000-0000-0000-000000000004'
+  '10000000-0000-0000-0000-000000000004',
+  '10000000-0000-0000-0000-000000000005'
 );
 
 insert into public.profiles (id, auth_user_id, role)
@@ -100,18 +115,53 @@ values
   ('20000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001', 'patient'),
   ('20000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000002', 'patient'),
   ('20000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000003', 'doctor'),
-  ('20000000-0000-0000-0000-000000000004', '10000000-0000-0000-0000-000000000004', 'operations');
+  ('20000000-0000-0000-0000-000000000004', '10000000-0000-0000-0000-000000000004', 'operations'),
+  ('20000000-0000-0000-0000-000000000005', '10000000-0000-0000-0000-000000000005', 'doctor');
 
 insert into public.patients (id, profile_id)
 values
   ('30000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001'),
   ('30000000-0000-0000-0000-000000000002', '20000000-0000-0000-0000-000000000002');
 
-insert into public.doctors (id, profile_id, status)
+insert into public.doctors (id, profile_id)
 values (
   '50000000-0000-0000-0000-000000000003',
-  '20000000-0000-0000-0000-000000000003',
-  'verified'
+  '20000000-0000-0000-0000-000000000003'
+);
+
+insert into public.doctors (
+  id,
+  profile_id,
+  full_name,
+  qualification,
+  registration_number,
+  registration_council,
+  registration_state,
+  specialty,
+  languages,
+  onboarding_completed_at
+)
+values (
+  '50000000-0000-0000-0000-000000000005',
+  '20000000-0000-0000-0000-000000000005',
+  'Dr Synthetic Reviewer Two',
+  'Synthetic Medical Degree',
+  'SYN-DOCTOR-2',
+  'Synthetic Medical Council',
+  'Synthetic State',
+  'General Medicine',
+  array['en']::public.doctor_language[],
+  now()
+);
+
+select results_eq(
+  $$
+    select status::text, is_bookable
+    from public.doctors
+    where id = '50000000-0000-0000-0000-000000000003'
+  $$,
+  $$ values ('pending_verification', false) $$,
+  'new doctors default to pending verification and non-bookable'
 );
 
 insert into public.consent_records (id, patient_id, consent_type, status, policy_version)
@@ -139,6 +189,15 @@ select ok(
 select ok(
   (select relrowsecurity from pg_class where oid = 'public.consent_records'::regclass),
   'consent_records has RLS enabled'
+);
+select ok(
+  (select relrowsecurity from pg_class where oid = 'public.audit_events'::regclass),
+  'audit_events has RLS enabled'
+);
+select is(
+  (select public from storage.buckets where id = 'doctor-profile-photos'),
+  false,
+  'doctor profile photo bucket is private'
 );
 
 set local role authenticated;
@@ -245,6 +304,27 @@ select throws_ok(
   'completed onboarding cannot be replayed'
 );
 
+select throws_ok(
+  $$
+    select public.complete_doctor_onboarding(
+      'Dr Synthetic Patient',
+      'Synthetic Degree',
+      'SYN-PATIENT-1',
+      'Synthetic Council',
+      'Synthetic State',
+      'General Medicine',
+      array['en']::public.doctor_language[],
+      null,
+      null,
+      null,
+      null
+    )
+  $$,
+  '42501',
+  'Doctor onboarding is unavailable',
+  'patient cannot complete doctor onboarding'
+);
+
 select results_eq(
   $$
     update public.patients
@@ -341,6 +421,210 @@ select throws_ok(
   'Patient onboarding is unavailable',
   'doctor cannot complete patient onboarding'
 );
+select lives_ok(
+  $$
+    select public.complete_doctor_onboarding(
+      'Dr Synthetic Clinician',
+      'Synthetic Medical Degree',
+      'SYN-DOCTOR-1',
+      'Synthetic Medical Council',
+      'Synthetic State',
+      'General Medicine',
+      array['en', 'hi']::public.doctor_language[],
+      75000,
+      'Synthetic City',
+      '100 Synthetic Clinic Road',
+      '10000000-0000-0000-0000-000000000003/profile.webp'
+    )
+  $$,
+  'doctor can complete own onboarding'
+);
+select results_eq(
+  $$
+    select
+      full_name,
+      registration_number,
+      languages::text,
+      teleconsultation_fee_paise,
+      status::text,
+      is_bookable,
+      profile_photo_object_path,
+      onboarding_completed_at is not null
+    from public.doctors
+  $$,
+  $$
+    values (
+      'Dr Synthetic Clinician',
+      'SYN-DOCTOR-1',
+      '{en,hi}',
+      75000,
+      'pending_verification',
+      false,
+      '10000000-0000-0000-0000-000000000003/profile.webp',
+      true
+    )
+  $$,
+  'doctor onboarding remains pending verification and non-bookable'
+);
+select throws_ok(
+  $$
+    select public.complete_doctor_onboarding(
+      'Dr Synthetic Clinician',
+      'Synthetic Medical Degree',
+      'SYN-DOCTOR-1',
+      'Synthetic Medical Council',
+      'Synthetic State',
+      'General Medicine',
+      array['en']::public.doctor_language[],
+      null,
+      null,
+      null,
+      null
+    )
+  $$,
+  '42501',
+  'Doctor onboarding is unavailable',
+  'completed doctor onboarding cannot be replayed'
+);
+select throws_ok(
+  $$
+    select public.transition_doctor_verification(
+      '50000000-0000-0000-0000-000000000003',
+      'approved',
+      'Self approval is forbidden.',
+      '10000000-0000-0000-0000-000000000003'
+    )
+  $$,
+  '42501',
+  'permission denied for function transition_doctor_verification',
+  'doctor cannot self-verify'
+);
+
+reset role;
+select throws_ok(
+  $$
+    update public.doctors
+    set is_bookable = true
+    where id = '50000000-0000-0000-0000-000000000003'
+  $$,
+  '23514',
+  null,
+  'pending doctor cannot be made bookable'
+);
+
+set local role service_role;
+select lives_ok(
+  $$
+    select public.transition_doctor_verification(
+      '50000000-0000-0000-0000-000000000003',
+      'approved',
+      'Registration and qualification verified.',
+      '10000000-0000-0000-0000-000000000004'
+    )
+  $$,
+  'service-only admin transition can approve a pending doctor'
+);
+select results_eq(
+  $$
+    select
+      status::text,
+      verification_reason,
+      verification_decided_at is not null,
+      verification_decided_by,
+      is_bookable
+    from public.doctors
+    where id = '50000000-0000-0000-0000-000000000003'
+  $$,
+  $$
+    values (
+      'verified',
+      'Registration and qualification verified.',
+      true,
+      '10000000-0000-0000-0000-000000000004'::uuid,
+      true
+    )
+  $$,
+  'approval stores reason, timestamp, actor, and verified bookability'
+);
+select results_eq(
+  $$
+    select actor_user_id, action, target_type, target_id, outcome, created_at is not null
+    from public.audit_events
+  $$,
+  $$
+    values (
+      '10000000-0000-0000-0000-000000000004'::uuid,
+      'doctor_verification_approved',
+      'doctor',
+      '50000000-0000-0000-0000-000000000003'::uuid,
+      'success',
+      true
+    )
+  $$,
+  'verification transition appends a content-free audit event'
+);
+select lives_ok(
+  $$
+    select public.transition_doctor_verification(
+      '50000000-0000-0000-0000-000000000005',
+      'rejected',
+      'Registration evidence could not be validated.',
+      '10000000-0000-0000-0000-000000000004'
+    )
+  $$,
+  'service-only admin transition can reject a pending doctor'
+);
+select results_eq(
+  $$
+    select
+      status::text,
+      verification_reason,
+      verification_decided_at is not null,
+      verification_decided_by,
+      is_bookable
+    from public.doctors
+    where id = '50000000-0000-0000-0000-000000000005'
+  $$,
+  $$
+    values (
+      'rejected',
+      'Registration evidence could not be validated.',
+      true,
+      '10000000-0000-0000-0000-000000000004'::uuid,
+      false
+    )
+  $$,
+  'rejection stores reason, timestamp, actor, and remains non-bookable'
+);
+select results_eq(
+  $$
+    select action, target_id, outcome, created_at is not null
+    from public.audit_events
+    where target_id = '50000000-0000-0000-0000-000000000005'
+  $$,
+  $$
+    values (
+      'doctor_verification_rejected',
+      '50000000-0000-0000-0000-000000000005'::uuid,
+      'success',
+      true
+    )
+  $$,
+  'rejection appends its own content-free audit event'
+);
+select throws_ok(
+  $$
+    select public.transition_doctor_verification(
+      '50000000-0000-0000-0000-000000000003',
+      'rejected',
+      'A completed transition cannot be replayed.',
+      '10000000-0000-0000-0000-000000000004'
+    )
+  $$,
+  '22023',
+  'Doctor verification transition is unavailable',
+  'completed verification transition cannot be replayed'
+);
 
 reset role;
 set local role authenticated;
@@ -353,6 +637,12 @@ select is(
   (select count(*) from public.consent_records),
   0::bigint,
   'operations client cannot read consent records'
+);
+select throws_ok(
+  $$ select * from public.audit_events $$,
+  '42501',
+  'permission denied for table audit_events',
+  'operations client cannot read audit events directly'
 );
 
 reset role;
