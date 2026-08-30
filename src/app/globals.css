@@ -52,6 +52,65 @@ main {
   padding: 1rem;
 }
 
+.consultation-mode-form {
+  align-items: flex-end;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin: 2rem 0;
+}
+
+.consultation-mode-form label {
+  font-weight: 700;
+}
+
+.consultation-mode-form button,
+.consultation-mode-form select {
+  font: inherit;
+  padding: 0.6rem;
+}
+
+.doctor-selection-list {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.doctor-selection-card {
+  border: 1px solid currentColor;
+  border-radius: 0.5rem;
+  padding: 1.25rem;
+}
+
+.doctor-details {
+  display: grid;
+  gap: 0.5rem 1rem;
+  grid-template-columns: minmax(10rem, 1fr) 2fr;
+}
+
+.doctor-details dt {
+  font-weight: 700;
+}
+
+.doctor-details dd {
+  margin: 0;
+}
+
+.doctor-slot-list {
+  display: grid;
+  gap: 1rem;
+  list-style: none;
+  padding: 0;
+}
+
+.doctor-slot-list > li {
+  border-top: 1px solid currentColor;
+  padding-top: 1rem;
+}
+
+.selection-disclaimer {
+  font-size: 0.9rem;
+}
+
 .intake-safety-banner {
   border: 2px solid #b45309;
   border-radius: 0.5rem;

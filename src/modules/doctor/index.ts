@@ -16,3 +16,20 @@ export {
   pilotSpecialtySchema,
 } from './specialties';
 export type { PilotSpecialty } from './specialties';
+export {
+  consultationModeSchema,
+  DOCTOR_MATCH_SHORTLIST_LIMIT,
+  DOCTOR_MATCH_SLOT_LIMIT,
+  doctorMatchSchema,
+  doctorMatchShortlistSchema,
+  doctorMatchSlotSchema,
+  doctorSelectionRequestSchema,
+  explainDoctorSuggestion,
+  formatSpecialtyLabel,
+  parseDoctorSelectionRequest,
+} from './matching';
+export type {
+  ConsultationMode,
+  DoctorMatch,
+  DoctorSelectionRequest,
+} from './matching';

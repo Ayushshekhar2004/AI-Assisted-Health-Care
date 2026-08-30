@@ -46,7 +46,10 @@ export default async function PatientHomePage() {
         <Link href="/patient/onboarding">Complete patient onboarding</Link>
       </p>
       <p>
-        <Link href="/patient/appointments">Browse appointments</Link>
+        <Link href="/patient/doctors">Choose a suggested doctor</Link>
+      </p>
+      <p>
+        <Link href="/patient/appointments">View appointments</Link>
       </p>
       <p>
         <Link href="/patient/intake">Start patient intake</Link>

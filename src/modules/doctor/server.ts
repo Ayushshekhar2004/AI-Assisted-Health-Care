@@ -12,6 +12,31 @@ import {
   type VerificationDecision,
   verificationDecisionSchema,
 } from './verification-validation';
+import {
+  doctorMatchShortlistSchema,
+  parseDoctorSelectionRequest,
+  type DoctorMatch,
+} from './matching';
+
+const doctorMatchSlotRowSchema = z.object({
+  id: z.string().uuid(),
+  startsAt: z.string().datetime({ offset: true }),
+  endsAt: z.string().datetime({ offset: true }),
+});
+
+type DoctorMatchRow = Readonly<{
+  clinic_city: unknown;
+  consultation_languages: unknown;
+  consultation_mode: unknown;
+  doctor_id: unknown;
+  doctor_name: unknown;
+  fee_paise: unknown;
+  next_slots: unknown;
+  qualification: unknown;
+  registration_number: unknown;
+  routing_decision_source: unknown;
+  specialty: unknown;
+}>;
 
 const queueEntrySchema = z.object({
   id: z.string().uuid(),
@@ -131,4 +156,47 @@ export async function getOwnDoctorVerificationState(): Promise<DoctorVerificatio
     isBookable: data.is_bookable,
     onboardingCompletedAt: data.onboarding_completed_at,
   });
+}
+
+export async function findMatchingDoctors(
+  input: unknown,
+): Promise<DoctorMatch[]> {
+  const request = parseDoctorSelectionRequest(input);
+  const supabase = await createUserClient();
+  const { data: authData, error: authError } = await supabase.auth.getUser();
+  if (authError || !authData.user) {
+    throw new Error('Doctor matching is unavailable');
+  }
+
+  const profile = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('auth_user_id', authData.user.id)
+    .maybeSingle();
+  if (profile.error || profile.data?.role !== 'patient') {
+    throw new Error('Doctor matching is unavailable');
+  }
+
+  const { data, error } = await supabase.rpc('find_matching_doctors', {
+    p_available_from: request.availableFrom,
+    p_available_until: request.availableUntil,
+    p_consultation_mode: request.consultationMode,
+  });
+  if (error) throw new Error('Doctor matching is unavailable');
+
+  return doctorMatchShortlistSchema.parse(
+    (data ?? []).map((match: DoctorMatchRow) => ({
+      doctorId: match.doctor_id,
+      doctorName: match.doctor_name,
+      qualification: match.qualification,
+      registrationNumber: match.registration_number,
+      specialty: match.specialty,
+      consultationLanguages: match.consultation_languages,
+      feePaise: match.fee_paise,
+      clinicCity: match.clinic_city,
+      consultationMode: match.consultation_mode,
+      routingDecisionSource: match.routing_decision_source,
+      nextSlots: z.array(doctorMatchSlotRowSchema).parse(match.next_slots),
+    })),
+  );
 }
