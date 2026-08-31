@@ -6,6 +6,7 @@ import { LocalDateTime } from '@/app/_components/local-date-time';
 import type { IntakeMessage } from '@/modules/intake/server';
 
 import { sendIntakeMessageAction, type IntakeActionState } from './actions';
+import { VoiceInput } from './voice-input';
 
 const initialState: IntakeActionState = { message: '', status: 'idle' };
 
@@ -18,6 +19,7 @@ export function IntakeChat({
     initialState,
   );
   const formRef = useRef<HTMLFormElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     if (state.status === 'success') formRef.current?.reset();
@@ -46,8 +48,19 @@ export function IntakeChat({
         <input name="sessionId" type="hidden" value={sessionId} />
         <label>
           Your response
-          <textarea maxLength={4000} name="message" required rows={5} />
+          <textarea
+            maxLength={4000}
+            name="message"
+            ref={textareaRef}
+            required
+            rows={5}
+          />
         </label>
+        <VoiceInput
+          disabled={pending}
+          sessionId={sessionId}
+          textareaRef={textareaRef}
+        />
         <button disabled={pending} type="submit">
           {pending ? 'Sending…' : 'Send response'}
         </button>

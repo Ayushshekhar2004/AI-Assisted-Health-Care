@@ -14,3 +14,19 @@ export type {
   IntakeOrchestratorResult,
 } from './orchestrator';
 export type { IntakeStructuredOutput } from './structured-output';
+export {
+  assessVoiceTranscript,
+  buildRealtimeTranscriptionSession,
+  intakeVoiceLanguageSchema,
+  isTrustedRealtimeSessionRequest,
+  parseRealtimeSessionRequest,
+  realtimeClientSecretResponseSchema,
+  realtimeSessionRequestSchema,
+  realtimeTranscriptionCompletedEventSchema,
+} from './realtime';
+export type {
+  IntakeVoiceLanguage,
+  MedicallyImportantTranscriptEntity,
+  RealtimeSessionRequest,
+  TranscriptConfirmationAssessment,
+} from './realtime';
