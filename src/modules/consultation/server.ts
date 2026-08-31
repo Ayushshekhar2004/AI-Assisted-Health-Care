@@ -1,15 +1,25 @@
 import 'server-only';
 
+import { createClient as createSupabaseAdminClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 
+import { getSupabaseAdminConfig } from '@/lib/supabase/admin-config';
 import { createClient } from '@/lib/supabase/server';
 import { pilotSpecialtySchema } from '@/modules/doctor';
 import { intakeStructuredOutputSchema } from '@/modules/intake';
 import {
+  emergencyScreeningAnswersSchema,
   routingFallbackReasonSchema,
   routingUrgencySchema,
 } from '@/modules/triage';
 
+import {
+  DOCTOR_HANDOFF_SUMMARY_VERSION,
+  doctorHandoffSummarySchema,
+  generateDoctorHandoff,
+  legacyDoctorHandoffSummarySchema,
+  type DoctorHandoffSummary,
+} from './handoff';
 import { parseAppointmentDetailId } from './validation';
 
 const appointmentStatusSchema = z.enum([
@@ -116,10 +126,37 @@ type TranscriptMessageRow = Readonly<{
   sequence_number: unknown;
 }>;
 
+const handoffSourceSchema = z.object({
+  structured_data: intakeStructuredOutputSchema,
+  explicit_answers: emergencyScreeningAnswersSchema,
+  triage_outcome: z.enum(['NO_RED_FLAG', 'RED_FLAG']),
+  matched_rule_codes: z
+    .array(z.string().regex(/^[A-Z][A-Z0-9_]{0,79}$/))
+    .max(100),
+  rule_set_version: z.string().trim().min(1).max(64),
+  routing_reason: z.string().trim().min(1).max(800).nullable(),
+});
+
+const storedHandoffSchema = z.union([
+  z.object({
+    summaryVersion: z.literal(DOCTOR_HANDOFF_SUMMARY_VERSION),
+    summary: doctorHandoffSummarySchema,
+    generatedAt: z.string().datetime({ offset: true }),
+  }),
+  z.object({
+    summaryVersion: z.literal('doctor-handoff-v1'),
+    summary: legacyDoctorHandoffSummarySchema,
+    generatedAt: z.string().datetime({ offset: true }),
+  }),
+]);
+
+const handoffItemKeySchema = z.string().regex(/^[a-z][a-z0-9_.]{0,119}$/);
+
 export type DoctorAppointmentDetail = z.infer<typeof appointmentDetailSchema>;
 export type DoctorAppointmentTranscriptMessage = z.infer<
   typeof transcriptMessageSchema
 >;
+export type StoredDoctorHandoff = z.infer<typeof storedHandoffSchema>;
 
 async function createAuthorizedDoctorClient() {
   const supabase = await createClient();
@@ -136,14 +173,21 @@ async function createAuthorizedDoctorClient() {
     throw new Error('Appointment detail is unavailable');
   }
 
-  return supabase;
+  return { supabase, userId: authData.user.id };
+}
+
+function createPrivilegedClient() {
+  const { secretKey, url } = getSupabaseAdminConfig();
+  return createSupabaseAdminClient(url, secretKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
 }
 
 export async function getDoctorAppointmentDetail(
   appointmentIdInput: unknown,
 ): Promise<DoctorAppointmentDetail> {
   const appointmentId = parseAppointmentDetailId(appointmentIdInput);
-  const supabase = await createAuthorizedDoctorClient();
+  const { supabase } = await createAuthorizedDoctorClient();
   const { data, error } = await supabase.rpc('get_doctor_appointment_detail', {
     p_appointment_id: appointmentId,
   });
@@ -182,7 +226,7 @@ export async function getDoctorAppointmentTranscript(
   appointmentIdInput: unknown,
 ): Promise<DoctorAppointmentTranscriptMessage[]> {
   const appointmentId = parseAppointmentDetailId(appointmentIdInput);
-  const supabase = await createAuthorizedDoctorClient();
+  const { supabase } = await createAuthorizedDoctorClient();
   const { data, error } = await supabase.rpc(
     'get_doctor_appointment_transcript',
     {
@@ -199,4 +243,123 @@ export async function getDoctorAppointmentTranscript(
       createdAt: message.created_at,
     })),
   );
+}
+
+export async function getDoctorAppointmentHandoff(
+  appointmentIdInput: unknown,
+): Promise<StoredDoctorHandoff | null> {
+  const appointmentId = parseAppointmentDetailId(appointmentIdInput);
+  const { supabase } = await createAuthorizedDoctorClient();
+  const { data, error } = await supabase.rpc('get_doctor_handoff', {
+    p_appointment_id: appointmentId,
+  });
+  if (error) throw new Error('Doctor handoff is unavailable');
+  if (!data?.length) return null;
+
+  const row = data[0] as {
+    summary_version: unknown;
+    summary_data: unknown;
+    generated_at: unknown;
+  };
+  return storedHandoffSchema.parse({
+    summaryVersion: row.summary_version,
+    summary: row.summary_data,
+    generatedAt: row.generated_at,
+  });
+}
+
+export async function generateAndStoreDoctorHandoff(
+  appointmentIdInput: unknown,
+): Promise<StoredDoctorHandoff> {
+  const appointmentId = parseAppointmentDetailId(appointmentIdInput);
+  const { supabase, userId } = await createAuthorizedDoctorClient();
+  const { data, error } = await supabase.rpc('get_doctor_handoff_source', {
+    p_appointment_id: appointmentId,
+  });
+  if (error || !data?.length) {
+    throw new Error('Doctor handoff is unavailable');
+  }
+
+  const source = handoffSourceSchema.parse(data[0]);
+  const summary: DoctorHandoffSummary = generateDoctorHandoff({
+    structuredIntake: source.structured_data,
+    explicitAnswers: source.explicit_answers,
+    triage: {
+      outcome: source.triage_outcome,
+      matchedRuleCodes: source.matched_rule_codes,
+      ruleSetVersion: source.rule_set_version,
+    },
+    routingReason: source.routing_reason,
+  });
+
+  const privileged = createPrivilegedClient();
+  const { error: storeError } = await privileged.rpc('record_doctor_handoff', {
+    p_actor_user_id: userId,
+    p_appointment_id: appointmentId,
+    p_summary_data: summary,
+    p_summary_version: DOCTOR_HANDOFF_SUMMARY_VERSION,
+  });
+  if (storeError) throw new Error('Doctor handoff is unavailable');
+
+  const { data: storedData, error: storedError } = await supabase.rpc(
+    'get_doctor_handoff',
+    { p_appointment_id: appointmentId },
+  );
+  if (storedError || !storedData?.length) {
+    throw new Error('Doctor handoff is unavailable');
+  }
+  const stored = storedData[0] as {
+    summary_version: unknown;
+    summary_data: unknown;
+    generated_at: unknown;
+  };
+  return storedHandoffSchema.parse({
+    summaryVersion: stored.summary_version,
+    summary: stored.summary_data,
+    generatedAt: stored.generated_at,
+  });
+}
+
+export async function getDoctorHandoffInaccurateItems(
+  appointmentIdInput: unknown,
+  summaryVersionInput: unknown,
+): Promise<string[]> {
+  const appointmentId = parseAppointmentDetailId(appointmentIdInput);
+  const summaryVersion = z
+    .enum(['doctor-handoff-v1', DOCTOR_HANDOFF_SUMMARY_VERSION])
+    .parse(summaryVersionInput);
+  const { supabase } = await createAuthorizedDoctorClient();
+  const { data, error } = await supabase.rpc(
+    'get_doctor_handoff_inaccurate_items',
+    {
+      p_appointment_id: appointmentId,
+      p_summary_version: summaryVersion,
+    },
+  );
+  if (error) throw new Error('Doctor handoff feedback is unavailable');
+  return z
+    .array(handoffItemKeySchema)
+    .parse(
+      ((data ?? []) as Array<{ item_key: unknown }>).map((row) => row.item_key),
+    );
+}
+
+export async function markDoctorHandoffItemInaccurate(
+  appointmentIdInput: unknown,
+  summaryVersionInput: unknown,
+  itemKeyInput: unknown,
+): Promise<string> {
+  const appointmentId = parseAppointmentDetailId(appointmentIdInput);
+  const summaryVersion = z
+    .enum(['doctor-handoff-v1', DOCTOR_HANDOFF_SUMMARY_VERSION])
+    .parse(summaryVersionInput);
+  const itemKey = handoffItemKeySchema.parse(itemKeyInput);
+  const { supabase } = await createAuthorizedDoctorClient();
+  const { data, error } = await supabase.rpc('mark_doctor_handoff_inaccurate', {
+    p_appointment_id: appointmentId,
+    p_item_key: itemKey,
+    p_summary_version: summaryVersion,
+  });
+  if (error) throw new Error('Doctor handoff feedback is unavailable');
+  return z.string().uuid().parse(data);
 }

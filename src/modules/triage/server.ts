@@ -130,13 +130,17 @@ export async function evaluateEmergencyScreening(
     (await getIntakeSummaryForHandoff(sessionId)) ?? emptyStructuredIntake;
   const result = evaluateRedFlags({ structuredIntake, explicitAnswers });
   const privileged = createPrivilegedClient();
-  const { data, error } = await privileged.rpc('record_triage_result', {
-    p_actor_user_id: userId,
-    p_intake_session_id: sessionId,
-    p_matched_rule_codes: [...result.matchedRuleCodes],
-    p_outcome: result.outcome,
-    p_rule_set_version: result.ruleSetVersion,
-  });
+  const { data, error } = await privileged.rpc(
+    'record_triage_result_with_answers',
+    {
+      p_actor_user_id: userId,
+      p_explicit_answers: explicitAnswers,
+      p_intake_session_id: sessionId,
+      p_matched_rule_codes: [...result.matchedRuleCodes],
+      p_outcome: result.outcome,
+      p_rule_set_version: result.ruleSetVersion,
+    },
+  );
   if (error) throw new Error('Triage is unavailable');
   if (!result.requiresEmergencyAction) return null;
   return activeRedFlagSchema.parse({

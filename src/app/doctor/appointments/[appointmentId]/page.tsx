@@ -1,8 +1,13 @@
 import Link from 'next/link';
 
-import { getDoctorAppointmentDetail } from '@/modules/consultation/server';
+import {
+  getDoctorAppointmentDetail,
+  getDoctorAppointmentHandoff,
+  getDoctorHandoffInaccurateItems,
+} from '@/modules/consultation/server';
 
 import { AppointmentDetail } from './appointment-detail';
+import { HandoffPanel } from './handoff-panel';
 
 type PageProps = Readonly<{
   params: Promise<{ appointmentId: string }>;
@@ -12,13 +17,24 @@ export default async function DoctorAppointmentDetailPage({
   params,
 }: PageProps) {
   try {
-    const detail = await getDoctorAppointmentDetail(
-      (await params).appointmentId,
-    );
+    const appointmentId = (await params).appointmentId;
+    const detail = await getDoctorAppointmentDetail(appointmentId);
+    const handoff = await getDoctorAppointmentHandoff(appointmentId);
+    const inaccurateItemKeys = handoff
+      ? await getDoctorHandoffInaccurateItems(
+          appointmentId,
+          handoff.summaryVersion,
+        )
+      : [];
     return (
       <main>
         <h1>Appointment details</h1>
         <AppointmentDetail detail={detail} />
+        <HandoffPanel
+          appointmentId={appointmentId}
+          initialHandoff={handoff}
+          initialInaccurateItemKeys={inaccurateItemKeys}
+        />
         <p>
           <Link href="/doctor">Back to doctor dashboard</Link>
         </p>
