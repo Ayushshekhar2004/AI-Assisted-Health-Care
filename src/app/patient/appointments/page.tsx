@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 
 import { LocalDateTime } from '@/app/_components/local-date-time';
 import { AppointmentVideoCall } from '@/app/_components/appointment-video-call';
+import { getOwnConsultationNote } from '@/modules/consultation/server';
 import {
   listBookableSlots,
   listOwnPatientAppointments,
@@ -10,6 +11,7 @@ import {
 import { getActiveRedFlag } from '@/modules/triage/server';
 
 import { BookingForm } from './booking-form';
+import { ConsultationNoteView } from './consultation-note-view';
 
 function formatFee(feePaise: number | null): string {
   return feePaise === null
@@ -47,6 +49,17 @@ export default async function PatientAppointmentsPage() {
       listBookableSlots(),
       listOwnPatientAppointments(),
     ]);
+    const consultationNotes = new Map(
+      await Promise.all(
+        appointments.map(
+          async (appointment) =>
+            [
+              appointment.id,
+              await getOwnConsultationNote(appointment.id),
+            ] as const,
+        ),
+      ),
+    );
 
     return (
       <main>
@@ -91,6 +104,11 @@ export default async function PatientAppointmentsPage() {
                 <p>Status: {appointment.status.replaceAll('_', ' ')}</p>
                 {['CONFIRMED', 'IN_PROGRESS'].includes(appointment.status) ? (
                   <AppointmentVideoCall appointmentId={appointment.id} />
+                ) : null}
+                {consultationNotes.get(appointment.id) ? (
+                  <ConsultationNoteView
+                    note={consultationNotes.get(appointment.id)!}
+                  />
                 ) : null}
               </li>
             ))}

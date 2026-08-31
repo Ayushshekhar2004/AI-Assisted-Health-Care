@@ -21,6 +21,19 @@ import {
   type DoctorHandoffSummary,
 } from './handoff';
 import { parseAppointmentDetailId } from './validation';
+import {
+  consultationNoteInputSchema,
+  consultationNoteSchema,
+  parseFinalConsultationNote,
+  type ConsultationNote,
+  type ConsultationNoteInput,
+} from './note';
+import {
+  CONSULTATION_AI_PROMPT_VERSION,
+  consultationAIDraftRequestSchema,
+  generateConsultationAIDraft,
+} from './ai-draft';
+import { OpenAIConsultationDraftModel } from './openai-draft-model';
 
 const appointmentStatusSchema = z.enum([
   'REQUESTED',
@@ -157,6 +170,46 @@ export type DoctorAppointmentTranscriptMessage = z.infer<
   typeof transcriptMessageSchema
 >;
 export type StoredDoctorHandoff = z.infer<typeof storedHandoffSchema>;
+
+type ConsultationNoteRow = Readonly<{
+  id: unknown;
+  appointment_id: unknown;
+  subjective_history: unknown;
+  examination_observations: unknown;
+  assessment: unknown;
+  plan: unknown;
+  follow_up: unknown;
+  telemedicine_adequacy: unknown;
+  status: unknown;
+  finalized_at: unknown;
+  finalized_by_doctor_id: unknown;
+  ai_draft_generated_at: unknown;
+  ai_model_name: unknown;
+  ai_model_version: unknown;
+  ai_prompt_version: unknown;
+  updated_at: unknown;
+}>;
+
+function parseConsultationRow(row: ConsultationNoteRow): ConsultationNote {
+  return consultationNoteSchema.parse({
+    id: row.id,
+    appointmentId: row.appointment_id,
+    subjectiveHistory: row.subjective_history,
+    examinationObservations: row.examination_observations,
+    assessment: row.assessment,
+    plan: row.plan,
+    followUp: row.follow_up,
+    telemedicineAdequacy: row.telemedicine_adequacy,
+    status: row.status,
+    finalizedAt: row.finalized_at,
+    finalizedByDoctorId: row.finalized_by_doctor_id,
+    aiDraftGeneratedAt: row.ai_draft_generated_at,
+    aiModelName: row.ai_model_name,
+    aiModelVersion: row.ai_model_version,
+    aiPromptVersion: row.ai_prompt_version,
+    updatedAt: row.updated_at,
+  });
+}
 
 async function createAuthorizedDoctorClient() {
   const supabase = await createClient();
@@ -362,4 +415,99 @@ export async function markDoctorHandoffItemInaccurate(
   });
   if (error) throw new Error('Doctor handoff feedback is unavailable');
   return z.string().uuid().parse(data);
+}
+
+export async function getOwnConsultationNote(
+  appointmentIdInput: unknown,
+): Promise<ConsultationNote | null> {
+  const appointmentId = parseAppointmentDetailId(appointmentIdInput);
+  const supabase = await createClient();
+  const { data: authData, error: authError } = await supabase.auth.getUser();
+  if (authError || !authData.user)
+    throw new Error('Consultation note is unavailable');
+  const { data, error } = await supabase.rpc('get_own_consultation', {
+    p_appointment_id: appointmentId,
+  });
+  if (error) throw new Error('Consultation note is unavailable');
+  if (!data?.length) return null;
+  return parseConsultationRow(data[0] as ConsultationNoteRow);
+}
+
+function consultationRpcArgs(note: ConsultationNoteInput) {
+  return {
+    p_appointment_id: note.appointmentId,
+    p_subjective_history: note.subjectiveHistory,
+    p_examination_observations: note.examinationObservations,
+    p_assessment: note.assessment,
+    p_plan: note.plan,
+    p_follow_up: note.followUp,
+    p_telemedicine_adequacy: note.telemedicineAdequacy || null,
+  };
+}
+
+export async function saveConsultationDraft(input: unknown): Promise<void> {
+  const note = consultationNoteInputSchema.parse(input);
+  const { supabase } = await createAuthorizedDoctorClient();
+  const { error } = await supabase.rpc(
+    'save_consultation_draft',
+    consultationRpcArgs(note),
+  );
+  if (error) throw new Error('Consultation note is unavailable');
+}
+
+export async function finalizeConsultationNote(input: unknown): Promise<void> {
+  const note = parseFinalConsultationNote(input);
+  const { supabase } = await createAuthorizedDoctorClient();
+  const { error } = await supabase.rpc(
+    'finalize_consultation',
+    consultationRpcArgs(note),
+  );
+  if (error) throw new Error('Consultation note is unavailable');
+}
+
+export async function generateAndStoreConsultationAIDraft(
+  input: unknown,
+): Promise<ConsultationNote> {
+  const request = consultationAIDraftRequestSchema.parse(input);
+  const { supabase, userId } = await createAuthorizedDoctorClient();
+  const { data: sourceData, error: sourceError } = await supabase.rpc(
+    'get_consultation_ai_draft_source',
+    { p_appointment_id: request.appointmentId },
+  );
+  if (sourceError || !sourceData?.length) {
+    throw new Error('AI consultation draft is unavailable');
+  }
+  const reviewedIntake = intakeStructuredOutputSchema
+    .nullable()
+    .parse(sourceData[0].structured_data);
+  const generated = await generateConsultationAIDraft(
+    new OpenAIConsultationDraftModel(),
+    { reviewedIntake, doctorPoints: request.doctorPoints },
+  );
+
+  const privileged = createPrivilegedClient();
+  const { error: storeError } = await privileged.rpc(
+    'record_consultation_ai_draft',
+    {
+      p_actor_user_id: userId,
+      p_appointment_id: request.appointmentId,
+      p_subjective_history: generated.output.subjective_history,
+      p_examination_observations: generated.output.examination_observations,
+      p_assessment: generated.output.assessment,
+      p_plan: generated.output.plan,
+      p_follow_up: generated.output.follow_up,
+      p_model_name: generated.modelName,
+      p_model_version: generated.modelVersion,
+      p_prompt_version: CONSULTATION_AI_PROMPT_VERSION,
+    },
+  );
+  if (storeError) throw new Error('AI consultation draft is unavailable');
+
+  const { data, error } = await supabase.rpc('get_own_consultation', {
+    p_appointment_id: request.appointmentId,
+  });
+  if (error || !data?.length) {
+    throw new Error('AI consultation draft is unavailable');
+  }
+  return parseConsultationRow(data[0] as ConsultationNoteRow);
 }

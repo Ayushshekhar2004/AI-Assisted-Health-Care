@@ -165,6 +165,22 @@ main {
   padding-top: 1rem;
 }
 
+.consultation-note-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.consultation-note-form label {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.consultation-note-form textarea,
+.consultation-note-form select {
+  font: inherit;
+  padding: 0.6rem;
+}
+
 .appointment-video-entry {
   margin-top: 1rem;
 }
