@@ -146,6 +146,29 @@ main {
   padding: 1rem;
 }
 
+.appointment-video-call {
+  min-height: 30rem;
+  padding: 1rem 0;
+}
+
+.appointment-video-call [data-lk-theme] {
+  min-height: 28rem;
+}
+
+.consultation-connection-state {
+  font-weight: 700;
+}
+
+.consultation-text-fallback {
+  border-top: 1px solid currentColor;
+  margin-top: 1rem;
+  padding-top: 1rem;
+}
+
+.appointment-video-entry {
+  margin-top: 1rem;
+}
+
 .voice-input label {
   display: grid;
   gap: 0.4rem;

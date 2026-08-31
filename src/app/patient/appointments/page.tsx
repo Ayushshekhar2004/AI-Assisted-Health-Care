@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
 import { LocalDateTime } from '@/app/_components/local-date-time';
+import { AppointmentVideoCall } from '@/app/_components/appointment-video-call';
 import {
   listBookableSlots,
   listOwnPatientAppointments,
@@ -88,6 +89,9 @@ export default async function PatientAppointmentsPage() {
                 </p>
                 <p>{formatFee(appointment.feePaise)}</p>
                 <p>Status: {appointment.status.replaceAll('_', ' ')}</p>
+                {['CONFIRMED', 'IN_PROGRESS'].includes(appointment.status) ? (
+                  <AppointmentVideoCall appointmentId={appointment.id} />
+                ) : null}
               </li>
             ))}
           </ul>

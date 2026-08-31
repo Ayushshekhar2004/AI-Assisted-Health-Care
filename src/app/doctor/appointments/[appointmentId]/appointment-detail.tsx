@@ -1,5 +1,6 @@
 import type { DoctorAppointmentDetail } from '@/modules/consultation/server';
 
+import { AppointmentVideoCall } from '../../../_components/appointment-video-call';
 import { LocalDateTime } from '../../../_components/local-date-time';
 import { TranscriptPanel } from './transcript-panel';
 
@@ -44,6 +45,9 @@ export function AppointmentDetail({
           <LocalDateTime endsAt={detail.endsAt} startsAt={detail.startsAt} />
         </p>
         <p>Status: {fieldLabel(detail.status)}</p>
+        {['CONFIRMED', 'IN_PROGRESS'].includes(detail.status) ? (
+          <AppointmentVideoCall appointmentId={detail.id} />
+        ) : null}
       </section>
 
       <section aria-labelledby="patient-context">

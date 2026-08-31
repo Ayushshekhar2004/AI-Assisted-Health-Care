@@ -13,6 +13,11 @@ vi.mock('../../../_components/local-date-time', () => ({
 vi.mock('./transcript-panel', () => ({
   TranscriptPanel: () => <button type="button">Expand transcript</button>,
 }));
+vi.mock('../../../_components/appointment-video-call', () => ({
+  AppointmentVideoCall: () => (
+    <button type="button">Join video consultation</button>
+  ),
+}));
 
 const detail: DoctorAppointmentDetail = {
   id: '91000000-0000-4000-8000-000000000001',
@@ -83,6 +88,9 @@ describe('AppointmentDetail', () => {
     expect(screen.queryByText('0.4')).not.toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: 'Expand transcript' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Join video consultation' }),
     ).toBeInTheDocument();
   });
 });

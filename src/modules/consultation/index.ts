@@ -10,3 +10,11 @@ export {
   legacyDoctorHandoffSummarySchema,
 } from './handoff';
 export type { DoctorHandoffSourceTrace, DoctorHandoffSummary } from './handoff';
+export {
+  appointmentConsultationStartRequestSchema,
+  appointmentConsultationStartResponseSchema,
+  appointmentVideoTokenRequestSchema,
+  appointmentVideoTokenResponseSchema,
+  getAppointmentRoomName,
+  isTrustedVideoTokenRequest,
+} from './video';
