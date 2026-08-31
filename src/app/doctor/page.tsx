@@ -2,6 +2,14 @@ import { logoutAction } from '@/app/auth/actions';
 import Link from 'next/link';
 import type { DoctorVerificationState } from '@/modules/doctor';
 import { getOwnDoctorVerificationState } from '@/modules/doctor/server';
+import { parseDoctorDashboardQuery } from '@/modules/scheduling';
+import {
+  listDoctorDashboardAppointments,
+  type DoctorDashboardPage,
+} from '@/modules/scheduling/server';
+
+import { DashboardAppointments } from './dashboard-appointments';
+import { DashboardFilters } from './dashboard-filters';
 
 const statusMessages = {
   pending_verification:
@@ -11,18 +19,39 @@ const statusMessages = {
   suspended: 'Verification suspended. Your profile cannot be booked.',
 } as const;
 
-export default async function DoctorHomePage() {
+type PageProps = Readonly<{
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}>;
+
+export default async function DoctorHomePage({ searchParams }: PageProps) {
   let verification: DoctorVerificationState | null = null;
-  try {
-    verification = await getOwnDoctorVerificationState();
-  } catch {
-    // Render the generic unavailable state without exposing provider details.
+  let dashboard: DoctorDashboardPage | null = null;
+  const rawSearchParams = await searchParams;
+  const query = parseDoctorDashboardQuery(rawSearchParams);
+  const [verificationResult, dashboardResult] = await Promise.allSettled([
+    getOwnDoctorVerificationState(),
+    listDoctorDashboardAppointments(query),
+  ]);
+  if (verificationResult.status === 'fulfilled') {
+    verification = verificationResult.value;
+  }
+  if (dashboardResult.status === 'fulfilled') {
+    dashboard = dashboardResult.value;
   }
 
   return (
     <main>
       <h1>Doctor area</h1>
       <p>Your protected clinician workspace is ready.</p>
+      <DashboardFilters
+        query={query}
+        syncTimezone={rawSearchParams.timezoneOffsetMinutes === undefined}
+      />
+      {dashboard ? (
+        <DashboardAppointments dashboard={dashboard} />
+      ) : (
+        <p>Appointments are temporarily unavailable.</p>
+      )}
       {verification ? (
         <section aria-labelledby="verification-status">
           <h2 id="verification-status">Verification status</h2>

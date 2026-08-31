@@ -177,6 +177,108 @@ main {
   resize: vertical;
 }
 
+.dashboard-filters,
+.doctor-dashboard-details,
+.doctor-dashboard-heading,
+.pagination {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.dashboard-filters label {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.dashboard-filters select {
+  font: inherit;
+  padding: 0.6rem;
+}
+
+.doctor-dashboard-list {
+  display: grid;
+  gap: 1rem;
+  list-style: none;
+  padding: 0;
+}
+
+.doctor-dashboard-list > li {
+  border: 1px solid currentColor;
+  border-radius: 0.5rem;
+  padding: 1rem;
+}
+
+.doctor-dashboard-heading {
+  justify-content: space-between;
+}
+
+.doctor-dashboard-details div {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.doctor-dashboard-details dt {
+  font-weight: 700;
+}
+
+.doctor-dashboard-details dd {
+  margin: 0;
+}
+
+.urgency-badge {
+  border: 2px solid currentColor;
+  border-radius: 999px;
+  font-weight: 700;
+  padding: 0.25rem 0.65rem;
+}
+
+.urgency-urgent,
+.urgency-emergency {
+  background: #fff1f2;
+  color: #991b1b;
+}
+
+.appointment-detail-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+}
+
+.appointment-detail-grid > div {
+  border: 1px solid #cbd5e1;
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+}
+
+.appointment-detail-grid dt {
+  font-weight: 700;
+}
+
+.appointment-detail-grid dd {
+  margin: 0.4rem 0 0;
+}
+
+.ai-unverified-notice {
+  background: #fff7ed;
+  border: 2px solid #9a3412;
+  border-radius: 0.5rem;
+  color: #7c2d12;
+  font-weight: 700;
+  padding: 0.75rem;
+}
+
+.appointment-transcript {
+  display: grid;
+  gap: 1rem;
+}
+
+.appointment-transcript > li {
+  border-left: 4px solid #475569;
+  padding-left: 1rem;
+}
+
 .emergency-screening-form {
   display: grid;
   gap: 1rem;
