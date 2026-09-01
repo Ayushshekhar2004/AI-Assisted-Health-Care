@@ -18,6 +18,12 @@ export {
 } from './note';
 export type { ConsultationNote, ConsultationNoteInput } from './note';
 export {
+  consultationOutcomeInputSchema,
+  consultationOutcomeSchema,
+  consultationOutcomeTypeSchema,
+} from './outcome';
+export type { ConsultationOutcome, ConsultationOutcomeInput } from './outcome';
+export {
   CONSULTATION_AI_DRAFT_INSTRUCTIONS,
   CONSULTATION_AI_PROMPT_VERSION,
   consultationAIDraftInputSchema,

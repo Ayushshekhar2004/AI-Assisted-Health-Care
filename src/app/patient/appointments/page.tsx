@@ -12,6 +12,8 @@ import { getActiveRedFlag } from '@/modules/triage/server';
 
 import { BookingForm } from './booking-form';
 import { ConsultationNoteView } from './consultation-note-view';
+import { getOwnConsultationOutcome } from '@/modules/consultation/outcome-server';
+import { OutcomeView } from './outcome-view';
 
 function formatFee(feePaise: number | null): string {
   return feePaise === null
@@ -56,6 +58,17 @@ export default async function PatientAppointmentsPage() {
             [
               appointment.id,
               await getOwnConsultationNote(appointment.id),
+            ] as const,
+        ),
+      ),
+    );
+    const outcomes = new Map(
+      await Promise.all(
+        appointments.map(
+          async (appointment) =>
+            [
+              appointment.id,
+              await getOwnConsultationOutcome(appointment.id),
             ] as const,
         ),
       ),
@@ -109,6 +122,17 @@ export default async function PatientAppointmentsPage() {
                   <ConsultationNoteView
                     note={consultationNotes.get(appointment.id)!}
                   />
+                ) : null}
+                {outcomes.get(appointment.id) ? (
+                  <OutcomeView outcome={outcomes.get(appointment.id)!} />
+                ) : null}
+                {consultationNotes.get(appointment.id)?.status ===
+                'FINALIZED' ? (
+                  <p>
+                    <a href={`/api/consultation/${appointment.id}/document`}>
+                      Download finalized consultation PDF
+                    </a>
+                  </p>
                 ) : null}
               </li>
             ))}

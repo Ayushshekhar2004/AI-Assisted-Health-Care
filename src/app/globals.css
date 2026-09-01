@@ -181,6 +181,23 @@ main {
   padding: 0.6rem;
 }
 
+.prescription-editor-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.prescription-editor-form label {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.prescription-editor-form input,
+.prescription-editor-form textarea,
+.prescription-editor-form select {
+  font: inherit;
+  padding: 0.6rem;
+}
+
 .appointment-video-entry {
   margin-top: 1rem;
 }

@@ -10,6 +10,10 @@ import {
 import { AppointmentDetail } from './appointment-detail';
 import { HandoffPanel } from './handoff-panel';
 import { ConsultationNoteForm } from './consultation-note-form';
+import { getOwnPrescription } from '@/modules/prescription/server';
+import { PrescriptionEditor } from './prescription-editor';
+import { getOwnConsultationOutcome } from '@/modules/consultation/outcome-server';
+import { OutcomeForm } from './outcome-form';
 
 type PageProps = Readonly<{
   params: Promise<{ appointmentId: string }>;
@@ -22,6 +26,8 @@ export default async function DoctorAppointmentDetailPage({
     const appointmentId = (await params).appointmentId;
     const detail = await getDoctorAppointmentDetail(appointmentId);
     const consultationNote = await getOwnConsultationNote(appointmentId);
+    const prescription = await getOwnPrescription(appointmentId);
+    const outcome = await getOwnConsultationOutcome(appointmentId);
     const handoff = await getDoctorAppointmentHandoff(appointmentId);
     const inaccurateItemKeys = handoff
       ? await getDoctorHandoffInaccurateItems(
@@ -43,6 +49,22 @@ export default async function DoctorAppointmentDetailPage({
           appointmentStatus={detail.status}
           note={consultationNote}
         />
+        <PrescriptionEditor
+          appointmentId={appointmentId}
+          prescription={prescription}
+        />
+        <OutcomeForm
+          appointmentId={appointmentId}
+          noteFinalized={consultationNote?.status === 'FINALIZED'}
+          outcome={outcome}
+        />
+        {consultationNote?.status === 'FINALIZED' ? (
+          <p>
+            <a href={`/api/consultation/${appointmentId}/document`}>
+              Download finalized consultation PDF
+            </a>
+          </p>
+        ) : null}
         <p>
           <Link href="/doctor">Back to doctor dashboard</Link>
         </p>
