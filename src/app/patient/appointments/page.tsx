@@ -14,6 +14,8 @@ import { BookingForm } from './booking-form';
 import { ConsultationNoteView } from './consultation-note-view';
 import { getOwnConsultationOutcome } from '@/modules/consultation/outcome-server';
 import { OutcomeView } from './outcome-view';
+import { listOwnPatientDocuments } from '@/modules/patient/document-server';
+import { DocumentUploadForm } from './document-upload-form';
 
 function formatFee(feePaise: number | null): string {
   return feePaise === null
@@ -73,6 +75,17 @@ export default async function PatientAppointmentsPage() {
         ),
       ),
     );
+    const documents = new Map(
+      await Promise.all(
+        appointments.map(
+          async (appointment) =>
+            [
+              appointment.id,
+              await listOwnPatientDocuments(appointment.id),
+            ] as const,
+        ),
+      ),
+    );
 
     return (
       <main>
@@ -115,6 +128,20 @@ export default async function PatientAppointmentsPage() {
                 </p>
                 <p>{formatFee(appointment.feePaise)}</p>
                 <p>Status: {appointment.status.replaceAll('_', ' ')}</p>
+                <DocumentUploadForm appointmentId={appointment.id} />
+                {(documents.get(appointment.id) ?? []).length > 0 ? (
+                  <ul>
+                    {(documents.get(appointment.id) ?? []).map((document) => (
+                      <li key={document.id}>
+                        {document.filename} (
+                        {Math.ceil(document.sizeBytes / 1024)} KB){' '}
+                        <a href={`/api/documents/${document.id}/download`}>
+                          Download
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
                 {['CONFIRMED', 'IN_PROGRESS'].includes(appointment.status) ? (
                   <AppointmentVideoCall appointmentId={appointment.id} />
                 ) : null}

@@ -14,6 +14,8 @@ import { getOwnPrescription } from '@/modules/prescription/server';
 import { PrescriptionEditor } from './prescription-editor';
 import { getOwnConsultationOutcome } from '@/modules/consultation/outcome-server';
 import { OutcomeForm } from './outcome-form';
+import { listAssignedAppointmentDocuments } from '@/modules/patient/document-server';
+import { DoctorDocumentList } from './document-list';
 
 type PageProps = Readonly<{
   params: Promise<{ appointmentId: string }>;
@@ -28,6 +30,7 @@ export default async function DoctorAppointmentDetailPage({
     const consultationNote = await getOwnConsultationNote(appointmentId);
     const prescription = await getOwnPrescription(appointmentId);
     const outcome = await getOwnConsultationOutcome(appointmentId);
+    const documents = await listAssignedAppointmentDocuments(appointmentId);
     const handoff = await getDoctorAppointmentHandoff(appointmentId);
     const inaccurateItemKeys = handoff
       ? await getDoctorHandoffInaccurateItems(
@@ -39,6 +42,7 @@ export default async function DoctorAppointmentDetailPage({
       <main>
         <h1>Appointment details</h1>
         <AppointmentDetail detail={detail} />
+        <DoctorDocumentList documents={documents} />
         <HandoffPanel
           appointmentId={appointmentId}
           initialHandoff={handoff}

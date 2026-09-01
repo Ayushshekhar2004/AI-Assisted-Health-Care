@@ -3,6 +3,20 @@
   font-family: system-ui, sans-serif;
 }
 
+.document-upload-form {
+  border: 1px solid #cbd5e1;
+  border-radius: 0.5rem;
+  display: grid;
+  gap: 0.5rem;
+  margin-block: 1rem;
+  padding: 1rem;
+}
+
+.document-upload-form input[type='file'] {
+  display: block;
+  margin-top: 0.5rem;
+}
+
 body {
   margin: 0;
 }
