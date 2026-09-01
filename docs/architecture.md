@@ -84,3 +84,15 @@ non-essential categories, initially appointment reminders.
 
 Changes that require independently deployed services, direct cross-module table ownership, or weaker
 role boundaries need an explicit architecture and security review before implementation.
+
+Appointment cancellation and rescheduling are scheduling-domain operations, not direct appointment
+updates. Only requested or confirmed appointments may be changed. A reschedule atomically cancels
+the original appointment and creates a requested replacement in an unbooked future slot for the same
+doctor. The original appointment and its categorical change record remain immutable for history and
+auditability. Finalized clinical artifacts are never modified by scheduling operations.
+
+Doctor-created follow-up recommendations are immutable, categorical scheduling context attached to a
+completed consultation with a recorded follow-up-required outcome. Patient rebooking carries only
+the opaque recommendation link, recommending doctor, and timing category. It creates a new requested
+appointment and deliberately does not attach the previous intake, consultation note, outcome, or
+prescription; the patient must provide current context for the new encounter.

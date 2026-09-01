@@ -1,5 +1,16 @@
-export { parseAvailabilityId, parseAvailabilityInput } from './validation';
-export type { AvailabilityInput } from './validation';
+export {
+  appointmentCancellationSchema,
+  appointmentChangeReasonSchema,
+  appointmentRescheduleSchema,
+  followUpBookingSchema,
+  parseAvailabilityId,
+  parseAvailabilityInput,
+} from './validation';
+export type {
+  AppointmentCancellationInput,
+  AppointmentRescheduleInput,
+  AvailabilityInput,
+} from './validation';
 export {
   appointmentStatusSchema,
   DOCTOR_DASHBOARD_PAGE_SIZE,

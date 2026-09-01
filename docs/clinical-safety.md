@@ -78,3 +78,13 @@ that red flags cannot be cleared by AI output.
 Run narrow safety tests first, followed by the full suite, lint, typecheck, and production build.
 Clinical rule or patient-facing safety-language changes also require review by the designated clinical
 owner before merge. Unresolved safety-test failures block release.
+
+Cancellation and rescheduling must not alter completed appointments, finalized consultation notes,
+finalized prescriptions, or recorded consultation outcomes. Corrections to finalized clinical
+records require a separate, attributable correction workflow; until such a workflow exists, those
+records remain immutable.
+
+A follow-up recommendation is clinician-authored scheduling guidance, not a diagnosis or medication
+renewal. Rebooking must not clone a previous prescription, imply that medicines should continue, or
+assume the new encounter concerns the same clinical problem. Current symptoms and safety concerns
+must be reassessed for the new encounter through the applicable intake and red-flag workflows.

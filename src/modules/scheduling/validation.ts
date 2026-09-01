@@ -3,6 +3,33 @@ import { z } from 'zod';
 const isoDateTimeSchema = z.string().datetime({ offset: true });
 
 export const availabilityIdSchema = z.string().uuid();
+export const appointmentChangeReasonSchema = z.enum([
+  'PATIENT_SCHEDULE_CONFLICT',
+  'CARE_NO_LONGER_NEEDED',
+  'DOCTOR_UNAVAILABLE',
+  'CLINIC_OPERATIONAL',
+  'OTHER',
+]);
+
+export const appointmentCancellationSchema = z
+  .object({
+    appointmentId: z.string().uuid(),
+    reasonCategory: appointmentChangeReasonSchema,
+  })
+  .strict();
+
+export const appointmentRescheduleSchema = appointmentCancellationSchema
+  .extend({
+    availabilityId: availabilityIdSchema,
+  })
+  .strict();
+
+export const followUpBookingSchema = z
+  .object({
+    recommendationId: z.string().uuid(),
+    availabilityId: availabilityIdSchema,
+  })
+  .strict();
 
 const availabilityInputSchema = z.object({
   startsAtIso: isoDateTimeSchema,
@@ -13,6 +40,12 @@ export type AvailabilityInput = Readonly<{
   startsAtIso: string;
   endsAtIso: string;
 }>;
+export type AppointmentCancellationInput = z.infer<
+  typeof appointmentCancellationSchema
+>;
+export type AppointmentRescheduleInput = z.infer<
+  typeof appointmentRescheduleSchema
+>;
 
 export function parseAvailabilityInput(
   input: unknown,

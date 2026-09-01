@@ -2,7 +2,12 @@
 
 import { revalidatePath } from 'next/cache';
 
-import { bookAvailability } from '@/modules/scheduling/server';
+import {
+  bookAvailability,
+  cancelOwnAppointment,
+  rescheduleOwnAppointment,
+  bookFollowUp,
+} from '@/modules/scheduling/server';
 import { uploadOwnPatientDocument } from '@/modules/patient/document-server';
 import { getActiveRedFlag } from '@/modules/triage/server';
 
@@ -36,6 +41,81 @@ export async function bookAvailabilityAction(
   revalidatePath('/patient/appointments');
   revalidatePath('/doctor/availability');
   return { message: 'Appointment requested.', status: 'success' };
+}
+
+export async function bookFollowUpAction(
+  _state: BookingActionState,
+  formData: FormData,
+): Promise<BookingActionState> {
+  try {
+    if (await getActiveRedFlag()) {
+      return {
+        message:
+          'Online appointment routing is paused. Follow the emergency pathway now.',
+        status: 'error',
+      };
+    }
+    await bookFollowUp({
+      recommendationId: formData.get('recommendationId'),
+      availabilityId: formData.get('availabilityId'),
+    });
+  } catch {
+    return {
+      message: 'Unable to request this follow-up slot.',
+      status: 'error',
+    };
+  }
+  revalidatePath('/patient/appointments');
+  revalidatePath('/doctor');
+  return { message: 'Follow-up appointment requested.', status: 'success' };
+}
+
+export type AppointmentChangeActionState = Readonly<{
+  message: string;
+  status: 'idle' | 'error' | 'success';
+}>;
+
+export async function cancelPatientAppointmentAction(
+  _state: AppointmentChangeActionState,
+  formData: FormData,
+): Promise<AppointmentChangeActionState> {
+  try {
+    await cancelOwnAppointment({
+      appointmentId: formData.get('appointmentId'),
+      reasonCategory: formData.get('reasonCategory'),
+    });
+  } catch {
+    return { message: 'Unable to cancel this appointment.', status: 'error' };
+  }
+  revalidatePath('/patient/appointments');
+  revalidatePath('/patient/history');
+  revalidatePath('/doctor');
+  return { message: 'Appointment cancelled.', status: 'success' };
+}
+
+export async function reschedulePatientAppointmentAction(
+  _state: AppointmentChangeActionState,
+  formData: FormData,
+): Promise<AppointmentChangeActionState> {
+  try {
+    await rescheduleOwnAppointment({
+      appointmentId: formData.get('appointmentId'),
+      availabilityId: formData.get('availabilityId'),
+      reasonCategory: formData.get('reasonCategory'),
+    });
+  } catch {
+    return {
+      message: 'Unable to reschedule this appointment.',
+      status: 'error',
+    };
+  }
+  revalidatePath('/patient/appointments');
+  revalidatePath('/patient/history');
+  revalidatePath('/doctor');
+  return {
+    message: 'Replacement appointment requested.',
+    status: 'success',
+  };
 }
 
 export type DocumentUploadActionState = Readonly<{

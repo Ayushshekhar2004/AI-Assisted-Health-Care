@@ -6,6 +6,9 @@ import { dispatchNotificationEventsForAppointment } from '@/modules/notification
 
 import {
   DOCTOR_DASHBOARD_PAGE_SIZE,
+  appointmentCancellationSchema,
+  appointmentRescheduleSchema,
+  followUpBookingSchema,
   getDoctorDashboardRange,
   parseAvailabilityId,
   parseAvailabilityInput,
@@ -19,6 +22,9 @@ const availabilitySchema = z.object({
   startsAt: z.string().datetime({ offset: true }),
   endsAt: z.string().datetime({ offset: true }),
 });
+
+export type AppointmentRescheduleOption = z.infer<typeof availabilitySchema>;
+export type FollowUpBookingOption = z.infer<typeof availabilitySchema>;
 
 const bookableSlotSchema = availabilitySchema.extend({
   doctorName: z.string().min(1).max(120),
@@ -72,6 +78,12 @@ type PatientAppointmentRow = Readonly<{
   fee_paise: unknown;
   starts_at: unknown;
   status: unknown;
+}>;
+
+type AppointmentRescheduleOptionRow = Readonly<{
+  availability_id: unknown;
+  starts_at: unknown;
+  ends_at: unknown;
 }>;
 
 type DoctorDashboardAppointmentRow = Readonly<{
@@ -275,4 +287,82 @@ export async function transitionAppointmentStatus(
   await dispatchNotificationEventsForAppointment(
     transition.appointmentId,
   ).catch(() => undefined);
+}
+
+export async function listAppointmentRescheduleOptions(
+  appointmentIdInput: unknown,
+): Promise<AppointmentRescheduleOption[]> {
+  const appointmentId = z.string().uuid().parse(appointmentIdInput);
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc(
+    'list_appointment_reschedule_options',
+    { p_appointment_id: appointmentId },
+  );
+  if (error) throw new Error('Reschedule options are unavailable');
+  return z.array(availabilitySchema).parse(
+    (data ?? []).map((option: AppointmentRescheduleOptionRow) => ({
+      id: option.availability_id,
+      startsAt: option.starts_at,
+      endsAt: option.ends_at,
+    })),
+  );
+}
+
+export async function cancelOwnAppointment(input: unknown): Promise<void> {
+  const cancellation = appointmentCancellationSchema.parse(input);
+  const supabase = await createClient();
+  const { error } = await supabase.rpc('cancel_appointment', {
+    p_appointment_id: cancellation.appointmentId,
+    p_reason_category: cancellation.reasonCategory,
+  });
+  if (error) throw new Error('Appointment cancellation is unavailable');
+  await dispatchNotificationEventsForAppointment(
+    cancellation.appointmentId,
+  ).catch(() => undefined);
+}
+
+export async function rescheduleOwnAppointment(
+  input: unknown,
+): Promise<string> {
+  const reschedule = appointmentRescheduleSchema.parse(input);
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc('reschedule_appointment', {
+    p_appointment_id: reschedule.appointmentId,
+    p_new_availability_id: reschedule.availabilityId,
+    p_reason_category: reschedule.reasonCategory,
+  });
+  if (error) throw new Error('Appointment rescheduling is unavailable');
+  const replacementId = z.string().uuid().parse(data);
+  await dispatchNotificationEventsForAppointment(
+    reschedule.appointmentId,
+  ).catch(() => undefined);
+  return replacementId;
+}
+
+export async function listFollowUpBookingOptions(
+  recommendationIdInput: unknown,
+): Promise<FollowUpBookingOption[]> {
+  const recommendationId = z.string().uuid().parse(recommendationIdInput);
+  const supabase = await createAuthorizedClient('patient');
+  const { data, error } = await supabase.rpc('list_follow_up_booking_options', {
+    p_recommendation_id: recommendationId,
+  });
+  if (error) throw new Error('Follow-up booking is unavailable');
+  return z.array(availabilitySchema).parse(
+    (data ?? []).map((option: AppointmentRescheduleOptionRow) => ({
+      id: option.availability_id,
+      startsAt: option.starts_at,
+      endsAt: option.ends_at,
+    })),
+  );
+}
+
+export async function bookFollowUp(input: unknown): Promise<void> {
+  const value = followUpBookingSchema.parse(input);
+  const supabase = await createAuthorizedClient('patient');
+  const { error } = await supabase.rpc('book_follow_up_appointment', {
+    p_availability_id: value.availabilityId,
+    p_recommendation_id: value.recommendationId,
+  });
+  if (error) throw new Error('Follow-up booking is unavailable');
 }

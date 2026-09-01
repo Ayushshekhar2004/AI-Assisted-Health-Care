@@ -24,6 +24,12 @@ export {
 } from './outcome';
 export type { ConsultationOutcome, ConsultationOutcomeInput } from './outcome';
 export {
+  followUpRecommendationInputSchema,
+  followUpRecommendationSchema,
+  followUpTimingSchema,
+} from './follow-up';
+export type { FollowUpRecommendation } from './follow-up';
+export {
   CONSULTATION_AI_DRAFT_INSTRUCTIONS,
   CONSULTATION_AI_PROMPT_VERSION,
   consultationAIDraftInputSchema,

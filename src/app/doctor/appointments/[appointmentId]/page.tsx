@@ -16,6 +16,10 @@ import { getOwnConsultationOutcome } from '@/modules/consultation/outcome-server
 import { OutcomeForm } from './outcome-form';
 import { listAssignedAppointmentDocuments } from '@/modules/patient/document-server';
 import { DoctorDocumentList } from './document-list';
+import { listAppointmentRescheduleOptions } from '@/modules/scheduling/server';
+import { DoctorAppointmentChangeForm } from './appointment-change-form';
+import { getOwnFollowUpRecommendation } from '@/modules/consultation/follow-up-server';
+import { FollowUpRecommendationForm } from './follow-up-recommendation-form';
 
 type PageProps = Readonly<{
   params: Promise<{ appointmentId: string }>;
@@ -30,7 +34,12 @@ export default async function DoctorAppointmentDetailPage({
     const consultationNote = await getOwnConsultationNote(appointmentId);
     const prescription = await getOwnPrescription(appointmentId);
     const outcome = await getOwnConsultationOutcome(appointmentId);
+    const followUpRecommendation =
+      await getOwnFollowUpRecommendation(appointmentId);
     const documents = await listAssignedAppointmentDocuments(appointmentId);
+    const rescheduleOptions = ['REQUESTED', 'CONFIRMED'].includes(detail.status)
+      ? await listAppointmentRescheduleOptions(appointmentId)
+      : [];
     const handoff = await getDoctorAppointmentHandoff(appointmentId);
     const inaccurateItemKeys = handoff
       ? await getDoctorHandoffInaccurateItems(
@@ -42,6 +51,12 @@ export default async function DoctorAppointmentDetailPage({
       <main>
         <h1>Appointment details</h1>
         <AppointmentDetail detail={detail} />
+        {['REQUESTED', 'CONFIRMED'].includes(detail.status) ? (
+          <DoctorAppointmentChangeForm
+            appointmentId={appointmentId}
+            options={rescheduleOptions}
+          />
+        ) : null}
         <DoctorDocumentList documents={documents} />
         <HandoffPanel
           appointmentId={appointmentId}
@@ -61,6 +76,11 @@ export default async function DoctorAppointmentDetailPage({
           appointmentId={appointmentId}
           noteFinalized={consultationNote?.status === 'FINALIZED'}
           outcome={outcome}
+        />
+        <FollowUpRecommendationForm
+          appointmentId={appointmentId}
+          outcome={outcome?.outcome ?? null}
+          recommendation={followUpRecommendation}
         />
         {consultationNote?.status === 'FINALIZED' ? (
           <p>

@@ -6,6 +6,7 @@ import { AppointmentVideoCall } from '@/app/_components/appointment-video-call';
 import { getOwnConsultationNote } from '@/modules/consultation/server';
 import {
   listBookableSlots,
+  listAppointmentRescheduleOptions,
   listOwnPatientAppointments,
 } from '@/modules/scheduling/server';
 import { getActiveRedFlag } from '@/modules/triage/server';
@@ -16,6 +17,10 @@ import { getOwnConsultationOutcome } from '@/modules/consultation/outcome-server
 import { OutcomeView } from './outcome-view';
 import { listOwnPatientDocuments } from '@/modules/patient/document-server';
 import { DocumentUploadForm } from './document-upload-form';
+import { PatientAppointmentChangeForm } from './appointment-change-form';
+import { getOwnFollowUpRecommendation } from '@/modules/consultation/follow-up-server';
+import { listFollowUpBookingOptions } from '@/modules/scheduling/server';
+import { FollowUpBooking } from './follow-up-booking';
 
 function formatFee(feePaise: number | null): string {
   return feePaise === null
@@ -86,6 +91,46 @@ export default async function PatientAppointmentsPage() {
         ),
       ),
     );
+    const rescheduleOptions = new Map(
+      await Promise.all(
+        appointments.map(
+          async (appointment) =>
+            [
+              appointment.id,
+              ['REQUESTED', 'CONFIRMED'].includes(appointment.status)
+                ? await listAppointmentRescheduleOptions(appointment.id)
+                : [],
+            ] as const,
+        ),
+      ),
+    );
+    const followUpRecommendations = new Map(
+      await Promise.all(
+        appointments.map(
+          async (appointment) =>
+            [
+              appointment.id,
+              await getOwnFollowUpRecommendation(appointment.id),
+            ] as const,
+        ),
+      ),
+    );
+    const followUpOptions = new Map(
+      await Promise.all(
+        Array.from(followUpRecommendations.values())
+          .filter(
+            (recommendation) =>
+              recommendation && !recommendation.bookedAppointmentId,
+          )
+          .map(
+            async (recommendation) =>
+              [
+                recommendation!.id,
+                await listFollowUpBookingOptions(recommendation!.id),
+              ] as const,
+          ),
+      ),
+    );
 
     return (
       <main>
@@ -128,6 +173,12 @@ export default async function PatientAppointmentsPage() {
                 </p>
                 <p>{formatFee(appointment.feePaise)}</p>
                 <p>Status: {appointment.status.replaceAll('_', ' ')}</p>
+                {['REQUESTED', 'CONFIRMED'].includes(appointment.status) ? (
+                  <PatientAppointmentChangeForm
+                    appointmentId={appointment.id}
+                    options={rescheduleOptions.get(appointment.id) ?? []}
+                  />
+                ) : null}
                 <DocumentUploadForm appointmentId={appointment.id} />
                 {(documents.get(appointment.id) ?? []).length > 0 ? (
                   <ul>
@@ -152,6 +203,18 @@ export default async function PatientAppointmentsPage() {
                 ) : null}
                 {outcomes.get(appointment.id) ? (
                   <OutcomeView outcome={outcomes.get(appointment.id)!} />
+                ) : null}
+                {followUpRecommendations.get(appointment.id) ? (
+                  <FollowUpBooking
+                    recommendation={followUpRecommendations.get(
+                      appointment.id,
+                    )!}
+                    options={
+                      followUpOptions.get(
+                        followUpRecommendations.get(appointment.id)!.id,
+                      ) ?? []
+                    }
+                  />
                 ) : null}
                 {consultationNotes.get(appointment.id)?.status ===
                 'FINALIZED' ? (
