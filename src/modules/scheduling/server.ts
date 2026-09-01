@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import { createClient } from '@/lib/supabase/server';
 import type { ProfileRole } from '@/modules/auth';
+import { dispatchNotificationEventsForAppointment } from '@/modules/notification/server';
 
 import {
   DOCTOR_DASHBOARD_PAGE_SIZE,
@@ -250,4 +251,28 @@ export async function bookAvailability(input: unknown): Promise<void> {
     p_doctor_availability_id: availabilityId,
   });
   if (error) throw new Error('Scheduling is unavailable');
+}
+
+const appointmentTransitionSchema = z.object({
+  appointmentId: z.string().uuid(),
+  nextStatus: appointmentSchema.shape.status,
+});
+
+export async function transitionAppointmentStatus(
+  input: unknown,
+): Promise<void> {
+  const transition = appointmentTransitionSchema.parse(input);
+  const supabase = await createClient();
+  const { data: authData, error: authError } = await supabase.auth.getUser();
+  if (authError || !authData.user) throw new Error('Scheduling is unavailable');
+
+  const { error } = await supabase.rpc('transition_appointment_status', {
+    p_appointment_id: transition.appointmentId,
+    p_next_status: transition.nextStatus,
+  });
+  if (error) throw new Error('Scheduling is unavailable');
+
+  await dispatchNotificationEventsForAppointment(
+    transition.appointmentId,
+  ).catch(() => undefined);
 }

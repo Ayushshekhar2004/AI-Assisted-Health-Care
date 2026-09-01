@@ -3,6 +3,7 @@ import 'server-only';
 import { z } from 'zod';
 
 import { createClient } from '@/lib/supabase/server';
+import { dispatchNotificationEventsForAppointment } from '@/modules/notification/server';
 
 import { getLiveKitConfig } from './livekit-config';
 import {
@@ -74,6 +75,12 @@ export async function startAppointmentConsultation(
     p_appointment_id: input.appointmentId,
   });
   if (error) throw new Error('Consultation is unavailable');
+
+  if (data === 'IN_PROGRESS') {
+    await dispatchNotificationEventsForAppointment(input.appointmentId).catch(
+      () => undefined,
+    );
+  }
 
   return appointmentConsultationStartResponseSchema.parse({ status: data });
 }

@@ -16,6 +16,7 @@ Domain modules live under `src/modules`:
 - `scheduling`: appointment availability and booking
 - `consultation`: clinician-patient encounter workflow
 - `prescription`: clinician-controlled prescription workflow
+- `notification`: private event generation and server-side delivery providers
 - `audit`: security and compliance event recording
 
 Code in `src/app` defines delivery concerns such as pages, layouts, route handlers, and request
@@ -65,6 +66,14 @@ Server-side text AI workflows depend on a provider abstraction. OpenAI is the de
 Ollama is an optional loopback or explicit RFC1918 private-LAN development provider.
 Provider-specific transport code must return the same Zod-validated domain outputs and must never be
 imported into browser components. Public Ollama hosts and production Ollama configuration are denied.
+
+Notification delivery uses a server-only provider abstraction. Appointment state transitions create
+private, content-free notification events in the database; providers render only allow-listed
+logistics templates. The development provider performs no external delivery and is forbidden in
+production. Scheduled reminder dispatch belongs to a trusted server job, never a public route.
+Stable event UUIDs are provider idempotency keys; row-locked claims, expiring leases, and bounded
+backoff retries coordinate duplicate jobs. Patient preferences may suppress only explicitly
+non-essential categories, initially appointment reminders.
 
 Changes that require independently deployed services, direct cross-module table ownership, or weaker
 role boundaries need an explicit architecture and security review before implementation.

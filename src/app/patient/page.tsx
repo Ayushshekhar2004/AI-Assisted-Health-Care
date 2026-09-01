@@ -54,6 +54,9 @@ export default async function PatientHomePage() {
       <p>
         <Link href="/patient/intake">Start patient intake</Link>
       </p>
+      <p>
+        <Link href="/patient/notifications">Notification preferences</Link>
+      </p>
       <form action={logoutAction}>
         <button type="submit">Sign out</button>
       </form>

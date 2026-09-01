@@ -84,6 +84,22 @@ To switch back, set `AI_PROVIDER=openai` and configure the existing `OPENAI_*` v
 [structured outputs documentation](https://docs.ollama.com/capabilities/structured-outputs) for the
 local API behavior used by this application.
 
+### Development notifications
+
+Set `NOTIFICATION_PROVIDER=development` for local testing. Appointment confirmation, reminder,
+cancellation, and doctor-ready transitions create private, content-free delivery events. The
+development provider acknowledges due events without contacting an external service and without
+logging recipients or notification content. A trusted server scheduler must invoke
+`dispatchDueNotificationEvents` for scheduled reminders; no public reminder endpoint is exposed.
+The development provider is intentionally rejected in production until an approved delivery
+provider and scheduler are configured.
+
+Every event UUID is also the provider idempotency key. Database uniqueness, locked claims, and
+five-minute processing leases prevent concurrent jobs from sending the same event. Failures retry at
+bounded 1-minute, 5-minute, 30-minute, and 2-hour intervals, with no more than five attempts.
+Patients may opt out of appointment reminders; confirmation, cancellation, and doctor-ready notices
+remain essential appointment logistics and are not suppressed by that preference.
+
 Before merging changes, run:
 
 ```bash
