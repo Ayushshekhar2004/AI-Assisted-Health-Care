@@ -6,6 +6,7 @@ import {
 } from '@/modules/intake/server';
 import {
   getActiveRedFlag,
+  getSafeCareWhileWaiting,
   getLatestTriageResultForSession,
 } from '@/modules/triage/server';
 
@@ -13,6 +14,7 @@ import { startIntakeAction } from './actions';
 import { EmergencyScreeningForm } from './emergency-screening-form';
 import { IntakeChat } from './intake-chat';
 import { IntakeSafetyBanner } from './intake-safety-banner';
+import { SafeCareGuidance } from './safe-care-guidance';
 
 export default async function PatientIntakePage() {
   try {
@@ -39,6 +41,7 @@ export default async function PatientIntakePage() {
     const latestTriage = session
       ? await getLatestTriageResultForSession(session.id)
       : null;
+    const safeCareGuidance = session ? null : await getSafeCareWhileWaiting();
 
     return (
       <main>
@@ -48,6 +51,8 @@ export default async function PatientIntakePage() {
           <IntakeChat messages={messages} sessionId={session.id} />
         ) : session ? (
           <EmergencyScreeningForm sessionId={session.id} />
+        ) : safeCareGuidance ? (
+          <SafeCareGuidance guidance={safeCareGuidance} />
         ) : (
           <form action={startIntakeAction}>
             <p>Start a private intake session when you are ready.</p>

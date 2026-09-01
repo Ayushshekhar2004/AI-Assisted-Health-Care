@@ -44,3 +44,18 @@ export type {
   RoutingOutput,
   RoutingUrgency,
 } from './routing-output';
+export {
+  createSafeCareGuidance,
+  SAFE_CARE_CLASSIFICATION_INSTRUCTIONS,
+  SAFE_CARE_GUIDANCE_LIBRARY,
+  SAFE_CARE_LIBRARY_VERSION,
+  safeCareCategorySchema,
+  safeCareClassificationSchema,
+  safeCareGuidanceSchema,
+  safeCareInputSchema,
+} from './safe-care';
+export type {
+  SafeCareCategory,
+  SafeCareClassificationModel,
+  SafeCareGuidance,
+} from './safe-care';

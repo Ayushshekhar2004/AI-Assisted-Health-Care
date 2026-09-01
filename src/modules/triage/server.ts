@@ -7,6 +7,7 @@ import {
   getIntakeSummaryForHandoff,
   type IntakeStructuredOutput,
 } from '@/modules/intake/server';
+import { intakeStructuredOutputSchema } from '@/modules/intake';
 
 import { evaluateRedFlags } from './evaluate';
 import { createSpecialtyRoutingModel } from './model-provider';
@@ -14,7 +15,16 @@ import {
   routeIntakeToSpecialty,
   type SpecialtyRoutingServiceResult,
 } from './routing';
-import { parseEmergencyScreeningAnswers } from './screening';
+import {
+  emergencyScreeningAnswersSchema,
+  parseEmergencyScreeningAnswers,
+} from './screening';
+import {
+  createSafeCareGuidance,
+  isSafeCarePreResponseStatus,
+  safeCareGuidanceSchema,
+} from './safe-care';
+import { createSafeCareClassificationModel } from './safe-care-model-provider';
 
 const activeRedFlagSchema = z.object({
   id: z.string().uuid(),
@@ -55,6 +65,7 @@ const emptyStructuredIntake: IntakeStructuredOutput = {
 
 export type ActiveRedFlag = z.infer<typeof activeRedFlagSchema>;
 export type LatestTriageResult = z.infer<typeof latestTriageResultSchema>;
+export type SafeCareWhileWaiting = z.infer<typeof safeCareGuidanceSchema>;
 
 async function createAuthorizedPatientClient() {
   const supabase = await createClient();
@@ -197,4 +208,134 @@ export async function routeAndStoreIntakeSpecialty(
   });
   if (error) throw new Error('Routing is unavailable');
   return routing;
+}
+
+export async function getSafeCareWhileWaiting(): Promise<SafeCareWhileWaiting | null> {
+  const { supabase, userId } = await createAuthorizedPatientClient();
+  const completedIntake = await supabase
+    .from('intake_sessions')
+    .select('id')
+    .eq('status', 'COMPLETED')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const sessionId = completedIntake.data?.id;
+  if (completedIntake.error || !sessionId) return null;
+
+  const latestAppointment = await supabase
+    .from('appointments')
+    .select('status')
+    .eq('intake_session_id', sessionId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (latestAppointment.error) {
+    throw new Error('Safe care guidance is unavailable');
+  }
+  if (!isSafeCarePreResponseStatus(latestAppointment.data?.status ?? null)) {
+    return null;
+  }
+
+  const existing = await supabase
+    .from('safe_care_guidance_results')
+    .select('guidance_snapshot')
+    .eq('intake_session_id', sessionId)
+    .maybeSingle();
+  if (existing.error) throw new Error('Safe care guidance is unavailable');
+  if (existing.data) {
+    return safeCareGuidanceSchema.parse(existing.data.guidance_snapshot);
+  }
+
+  const [structuredResult, patientResult, redFlagResult] = await Promise.all([
+    supabase
+      .from('intake_structured')
+      .select('structured_data')
+      .eq('intake_session_id', sessionId)
+      .maybeSingle(),
+    supabase
+      .from('patients')
+      .select('date_of_birth, preferred_language')
+      .maybeSingle(),
+    supabase
+      .from('triage_results')
+      .select('explicit_answers, outcome')
+      .eq('intake_session_id', sessionId)
+      .order('evaluated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ]);
+  if (
+    structuredResult.error ||
+    patientResult.error ||
+    redFlagResult.error ||
+    !structuredResult.data ||
+    !patientResult.data?.date_of_birth ||
+    !patientResult.data.preferred_language
+  ) {
+    throw new Error('Safe care guidance is unavailable');
+  }
+
+  const structuredIntake = intakeStructuredOutputSchema.parse(
+    structuredResult.data.structured_data,
+  );
+  const parsedAnswers = emergencyScreeningAnswersSchema.safeParse(
+    redFlagResult.data?.explicit_answers,
+  );
+  const explicitAnswers = parsedAnswers.success ? parsedAnswers.data : [];
+  const completedEvaluation = evaluateRedFlags({
+    structuredIntake,
+    explicitAnswers,
+  });
+  const redFlagDetected =
+    redFlagResult.data?.outcome === 'RED_FLAG' ||
+    completedEvaluation.requiresEmergencyAction;
+  const privileged = createPrivilegedClient();
+
+  if (
+    completedEvaluation.requiresEmergencyAction &&
+    redFlagResult.data?.outcome !== 'RED_FLAG'
+  ) {
+    const { error } = await privileged.rpc('record_triage_result', {
+      p_actor_user_id: userId,
+      p_intake_session_id: sessionId,
+      p_matched_rule_codes: [...completedEvaluation.matchedRuleCodes],
+      p_outcome: 'RED_FLAG',
+      p_rule_set_version: completedEvaluation.ruleSetVersion,
+    });
+    if (error) throw new Error('Safe care guidance is unavailable');
+  }
+
+  const guidance = await createSafeCareGuidance(
+    createSafeCareClassificationModel(),
+    {
+      structuredIntake,
+      language: patientResult.data.preferred_language,
+      ageYears: calculateAgeYears(patientResult.data.date_of_birth),
+      redFlagDetected,
+    },
+  );
+
+  const { error } = await privileged.rpc('record_safe_care_guidance', {
+    p_actor_user_id: userId,
+    p_guidance: guidance,
+    p_intake_session_id: sessionId,
+  });
+  if (error) throw new Error('Safe care guidance is unavailable');
+  return guidance;
+}
+
+function calculateAgeYears(
+  dateOfBirth: string,
+  now: Date = new Date(),
+): number {
+  const birth = new Date(`${dateOfBirth}T00:00:00.000Z`);
+  let age = now.getUTCFullYear() - birth.getUTCFullYear();
+  if (
+    now.getUTCMonth() < birth.getUTCMonth() ||
+    (now.getUTCMonth() === birth.getUTCMonth() &&
+      now.getUTCDate() < birth.getUTCDate())
+  ) {
+    age -= 1;
+  }
+  return age;
 }

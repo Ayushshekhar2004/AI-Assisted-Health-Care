@@ -39,6 +39,25 @@ must fail safely and retain applicable escalation.
 The application is not an emergency response service. User-facing content must not imply continuous
 monitoring or guaranteed clinician response unless those capabilities are operationally verified.
 
+## Safe care while waiting
+
+Interim guidance is limited to a small, versioned library of clinician-reviewable content for
+explicitly supported low-risk categories. A language model may select a controlled category from a
+completed structured intake; it must never invent, extend, or rewrite the medical guidance. Model
+output is schema-validated, and malformed or unsupported classifications must not produce normal
+self-care steps.
+
+Normal interim guidance must be suppressed when deterministic red-flag logic fires or conservative
+higher-risk context is present, including pregnancy possibility, young children, frail/older people,
+relevant serious history, current medicines, or allergy concerns. A red flag always retains the
+existing urgent pathway and cannot be cleared by classification confidence. Interim content must not
+diagnose, recommend prescription medicines or antibiotics, provide dosages, or claim to replace a
+doctor.
+
+Every guidance-library version and all patient-facing translations require approval by the designated
+clinical owner before production use. Development content is not clinically validated merely because
+automated safety-boundary tests pass.
+
 ## Safe presentation
 
 - Label AI-generated suggestions as unreviewed until clinician approval.

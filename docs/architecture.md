@@ -67,6 +67,13 @@ Ollama is an optional loopback or explicit RFC1918 private-LAN development provi
 Provider-specific transport code must return the same Zod-validated domain outputs and must never be
 imported into browser components. Public Ollama hosts and production Ollama configuration are denied.
 
+Safe Care While You Wait belongs to the `triage` module. Its model provider may classify a completed
+intake into one controlled symptom category, but it cannot author patient guidance. Patient-facing
+steps, prohibitions, warning signs, escalation text, and disclaimers come only from the centralized,
+versioned guidance library. The service stores the exact validated library snapshot used for the
+patient and suppresses normal guidance when deterministic red-flag logic or conservative higher-risk
+context applies.
+
 Notification delivery uses a server-only provider abstraction. Appointment state transitions create
 private, content-free notification events in the database; providers render only allow-listed
 logistics templates. The development provider performs no external delivery and is forbidden in
