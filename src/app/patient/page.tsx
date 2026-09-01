@@ -52,6 +52,9 @@ export default async function PatientHomePage() {
         <Link href="/patient/appointments">View appointments</Link>
       </p>
       <p>
+        <Link href="/patient/history">View patient history</Link>
+      </p>
+      <p>
         <Link href="/patient/intake">Start patient intake</Link>
       </p>
       <p>

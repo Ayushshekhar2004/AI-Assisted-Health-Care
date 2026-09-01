@@ -156,8 +156,10 @@ export default async function PatientAppointmentsPage() {
                 {consultationNotes.get(appointment.id)?.status ===
                 'FINALIZED' ? (
                   <p>
-                    <a href={`/api/consultation/${appointment.id}/document`}>
-                      Download finalized consultation PDF
+                    <a
+                      href={`/api/patient/appointments/${appointment.id}/packet`}
+                    >
+                      Download my consultation packet
                     </a>
                   </p>
                 ) : null}

@@ -6,6 +6,7 @@ import {
   type PDFPage,
 } from 'pdf-lib';
 import type { ConsultationNote, ConsultationOutcome } from '../consultation';
+import type { IntakeStructuredOutput } from '../intake';
 import type { Prescription } from './validation';
 
 export type FinalizedDocumentInput = Readonly<{
@@ -14,6 +15,31 @@ export type FinalizedDocumentInput = Readonly<{
   prescription: Prescription | null;
   outcome: ConsultationOutcome | null;
 }>;
+
+export type PatientConsultationPacketInput = FinalizedDocumentInput &
+  Readonly<{ intake: IntakeStructuredOutput | null }>;
+
+export function createPatientIntakeSummaryLines(
+  intake: IntakeStructuredOutput,
+): string[] {
+  const list = (values: readonly string[]) =>
+    values.length ? values.join(', ') : 'None provided';
+  const pregnancy = intake.pregnancy_possibility.clinically_relevant
+    ? intake.pregnancy_possibility.response.replaceAll('_', ' ')
+    : 'Not clinically relevant';
+  return [
+    `Chief complaint: ${intake.chief_complaint ?? 'Not provided'}`,
+    `Onset: ${intake.onset ?? 'Not provided'}`,
+    `Duration: ${intake.duration ?? 'Not provided'}`,
+    `Severity: ${intake.severity ?? 'Not provided'}`,
+    `Associated symptoms: ${list(intake.associated_symptoms)}`,
+    `Relevant history: ${list(intake.relevant_history)}`,
+    `Current medicines: ${list(intake.current_medicines)}`,
+    `Allergies: ${list(intake.allergies)}`,
+    `Pregnancy possibility: ${pregnancy}`,
+    `Unanswered questions: ${list(intake.missing_information.map((item) => item.replaceAll('_', ' ')))}`,
+  ];
+}
 
 function safeText(value: string) {
   return value.normalize('NFKD').replace(/[^\x20-\x7E\n]/g, '?');
@@ -111,6 +137,93 @@ export async function createFinalizedConsultationPdf(
     write('No finalized prescription is associated with this consultation.');
   write(
     'This document contains clinician-finalized records. Seek urgent or emergency care when appropriate; this document does not rule out an emergency.',
+  );
+  return pdf.save();
+}
+
+export async function createPatientConsultationPacketPdf(
+  input: PatientConsultationPacketInput,
+): Promise<Uint8Array> {
+  if (input.consultation.status !== 'FINALIZED') {
+    throw new Error('Only finalized content can be rendered');
+  }
+  const pdf = await PDFDocument.create();
+  const font = await pdf.embedFont(StandardFonts.Helvetica);
+  const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
+  let page: PDFPage = pdf.addPage();
+  let y = page.getHeight() - 50;
+  const margin = 50;
+  const width = page.getWidth() - margin * 2;
+  function write(text: string, heading = false) {
+    const chosen = heading ? bold : font;
+    const size = heading ? 14 : 10;
+    for (const line of lines(text, chosen, size, width)) {
+      if (y < 50) {
+        page = pdf.addPage();
+        y = page.getHeight() - 50;
+      }
+      page.drawText(line, {
+        x: margin,
+        y,
+        size,
+        font: chosen,
+        color: rgb(0, 0, 0),
+      });
+      y -= size + 4;
+    }
+    y -= heading ? 6 : 3;
+  }
+
+  write('My consultation packet', true);
+  write(`Appointment: ${input.appointmentId}`);
+  write('Patient-provided intake summary', true);
+  if (input.intake) {
+    createPatientIntakeSummaryLines(input.intake).forEach((line) =>
+      write(line),
+    );
+  } else {
+    write('No structured intake was associated with this appointment.');
+  }
+  write('Clinician final note', true);
+  write(`Subjective history: ${input.consultation.subjectiveHistory}`);
+  write(
+    `Examination limitations/observations: ${input.consultation.examinationObservations}`,
+  );
+  write(`Assessment: ${input.consultation.assessment}`);
+  write(`Plan: ${input.consultation.plan}`);
+  write(`Follow-up: ${input.consultation.followUp || 'None specified'}`);
+  if (input.outcome) {
+    write('Consultation outcome', true);
+    write(input.outcome.outcome.replaceAll('_', ' '));
+    if (input.outcome.referralSpecialty)
+      write(`Referral specialty: ${input.outcome.referralSpecialty}`);
+    if (input.outcome.clinicLocation)
+      write(`Clinic/location: ${input.outcome.clinicLocation}`);
+    if (input.outcome.locationInstructions)
+      write(`Location instructions: ${input.outcome.locationInstructions}`);
+    if (input.outcome.appointmentNote)
+      write(`Appointment note: ${input.outcome.appointmentNote}`);
+  }
+  write('Finalized prescription', true);
+  if (input.prescription) {
+    write(`Doctor: ${input.prescription.doctorName}`);
+    write(
+      `Registration: ${input.prescription.registrationNumber}, ${input.prescription.registrationCouncil}, ${input.prescription.registrationState}`,
+    );
+    write(`Date: ${input.prescription.prescriptionDate}`);
+    input.prescription.items.forEach((item, index) =>
+      write(
+        `${index + 1}. ${item.itemType}: ${item.itemName}; dosage: ${item.dosage || '-'}; frequency: ${item.frequency || '-'}; duration: ${item.duration || '-'}; instructions: ${item.instructions || '-'}`,
+      ),
+    );
+    write(
+      `Prescription follow-up: ${input.prescription.followUp || 'None specified'}`,
+    );
+  } else {
+    write('No finalized prescription is associated with this consultation.');
+  }
+  write(
+    'This packet contains patient-provided intake and clinician-finalized records. It is not emergency guidance and does not rule out an emergency.',
   );
   return pdf.save();
 }

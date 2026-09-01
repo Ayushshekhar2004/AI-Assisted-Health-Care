@@ -20,3 +20,10 @@ export type {
   DocumentScanStatus,
   MalwareScanner,
 } from './document-scanner';
+export {
+  PATIENT_HISTORY_PAGE_SIZE,
+  parsePatientHistoryQuery,
+  patientHistoryItemSchema,
+  patientHistoryQuerySchema,
+} from './history';
+export type { PatientHistoryItem, PatientHistoryQuery } from './history';
