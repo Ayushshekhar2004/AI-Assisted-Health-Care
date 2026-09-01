@@ -6,6 +6,7 @@ import { redirect } from 'next/navigation';
 import { addIntakeMessage, startIntakeSession } from '@/modules/intake/server';
 import { EMERGENCY_SCREENING_QUESTIONS } from '@/modules/triage';
 import { evaluateEmergencyScreening } from '@/modules/triage/server';
+import { isAIProviderError } from '@/lib/ai/ollama-chat';
 
 export type IntakeActionState = Readonly<{
   message: string;
@@ -30,7 +31,16 @@ export async function sendIntakeMessageAction(
 ): Promise<IntakeActionState> {
   try {
     await addIntakeMessage(formData.get('sessionId'), formData.get('message'));
-  } catch {
+  } catch (error) {
+    if (isAIProviderError(error)) {
+      return {
+        message:
+          error.code === 'UNAVAILABLE'
+            ? 'The local AI service is unavailable. Check Ollama and try again.'
+            : 'The local AI response did not pass safety validation after retrying. Please try again.',
+        status: 'error',
+      };
+    }
     return { message: genericIntakeError, status: 'error' };
   }
 

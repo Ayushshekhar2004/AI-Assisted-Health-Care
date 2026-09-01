@@ -54,14 +54,10 @@ export const intakeStructuredOutputFormatSchema = z
 export const intakeStructuredOutputSchema =
   intakeStructuredOutputFormatSchema.superRefine((value, context) => {
     if (value.intake_complete) {
-      if (
-        value.missing_information.length > 0 ||
-        value.follow_up_question !== null
-      ) {
+      if (value.follow_up_question !== null) {
         context.addIssue({
           code: z.ZodIssueCode.custom,
-          message:
-            'Completed intake cannot have missing information or a follow-up question',
+          message: 'Completed intake cannot have a follow-up question',
         });
       }
     } else if (
@@ -113,9 +109,13 @@ Rules:
 - Never expose hidden reasoning, chain-of-thought, confidence scores, or internal analysis.
 - Preserve only facts stated by the patient. Do not infer missing clinical facts.
 - Ask exactly one concise follow-up question at a time, targeting the most important missing field.
+- Treat the previously validated structured intake as durable state. Never mark a field as missing
+  again after it was captured or explicitly answered, including negative answers such as "none".
+- Never repeat or paraphrase a question that appears in the conversation history.
 - Do not ask about pregnancy unless it is clinically relevant. Never infer pregnancy possibility.
 - When all relevant fields are sufficiently captured, set intake_complete true, use an empty
   missing_information array, and set follow_up_question to null.
+- The application may end a bounded intake with unanswered fields still in missing_information.
 - This assistant is not emergency care. Never reassure a patient that urgent care is unnecessary.
 
 Return only the structured output required by the schema.

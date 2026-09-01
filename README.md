@@ -54,6 +54,36 @@ npm install
 npm run dev
 ```
 
+### Local Ollama text AI
+
+OpenAI remains the default provider. For local development, the intake, specialty-routing, and
+consultation-draft workflows can instead use an Ollama model through the server. Install Ollama,
+start its local service, and pull a model that supports structured JSON output:
+
+```bash
+ollama serve
+ollama pull <model-name>
+```
+
+Then set these server-only values in `.env.local`:
+
+```env
+AI_PROVIDER=ollama
+OLLAMA_BASE_URL=http://127.0.0.1:11434
+OLLAMA_MODEL=<model-name>
+```
+
+The application permits loopback or explicit RFC1918 private-LAN Ollama IPs and rejects Ollama
+configuration in production. It rejects public hosts, URL credentials, and alternate URL paths.
+Model responses must match the existing Zod schemas. LAN Ollama commonly uses unencrypted HTTP, so
+use only trusted private networks and synthetic data. Voice transcription still requires the
+existing server-side OpenAI Realtime configuration.
+
+To switch back, set `AI_PROVIDER=openai` and configure the existing `OPENAI_*` variables. See the
+[Ollama chat API](https://docs.ollama.com/api/chat) and
+[structured outputs documentation](https://docs.ollama.com/capabilities/structured-outputs) for the
+local API behavior used by this application.
+
 Before merging changes, run:
 
 ```bash

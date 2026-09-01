@@ -33,7 +33,7 @@ import {
   consultationAIDraftRequestSchema,
   generateConsultationAIDraft,
 } from './ai-draft';
-import { OpenAIConsultationDraftModel } from './openai-draft-model';
+import { createConsultationDraftModel } from './model-provider';
 
 const appointmentStatusSchema = z.enum([
   'REQUESTED',
@@ -481,7 +481,7 @@ export async function generateAndStoreConsultationAIDraft(
     .nullable()
     .parse(sourceData[0].structured_data);
   const generated = await generateConsultationAIDraft(
-    new OpenAIConsultationDraftModel(),
+    createConsultationDraftModel(),
     { reviewedIntake, doctorPoints: request.doctorPoints },
   );
 

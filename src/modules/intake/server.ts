@@ -11,7 +11,8 @@ import {
   parseIntakeMessage,
   parseIntakeSessionId,
 } from './index';
-import { OpenAIIntakeModel } from './openai-model';
+import { createIntakeModel } from './model-provider';
+import { hasPendingPatientTurn } from './pending-turn';
 
 const intakeSessionSchema = z.object({
   id: z.string().uuid(),
@@ -122,11 +123,22 @@ export async function addIntakeMessage(
   const sessionId = parseIntakeSessionId(sessionIdInput);
   const text = parseIntakeMessage(textInput);
   const { supabase, userId } = await createAuthorizedPatientClient();
-  const { error } = await supabase.rpc('add_intake_patient_message', {
-    p_intake_session_id: sessionId,
-    p_text_content: text,
-  });
-  if (error) throw new Error('Intake is unavailable');
+  const latestMessage = await supabase
+    .from('intake_messages')
+    .select('role')
+    .eq('intake_session_id', sessionId)
+    .order('sequence_number', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (latestMessage.error) throw new Error('Intake is unavailable');
+
+  if (!hasPendingPatientTurn(latestMessage.data?.role ?? null)) {
+    const { error } = await supabase.rpc('add_intake_patient_message', {
+      p_intake_session_id: sessionId,
+      p_text_content: text,
+    });
+    if (error) throw new Error('Intake is unavailable');
+  }
 
   const [messagesResult, structuredResult] = await Promise.all([
     supabase
@@ -157,7 +169,7 @@ export async function addIntakeMessage(
   const previousStructured = structuredResult.data
     ? intakeStructuredOutputSchema.parse(structuredResult.data.structured_data)
     : null;
-  const turn = await orchestrateIntake(new OpenAIIntakeModel(), {
+  const turn = await orchestrateIntake(createIntakeModel(), {
     messages,
     previousStructured,
   });

@@ -9,7 +9,7 @@ import {
 } from '@/modules/intake/server';
 
 import { evaluateRedFlags } from './evaluate';
-import { OpenAISpecialtyRoutingModel } from './openai-routing-model';
+import { createSpecialtyRoutingModel } from './model-provider';
 import {
   routeIntakeToSpecialty,
   type SpecialtyRoutingServiceResult,
@@ -178,13 +178,10 @@ export async function routeAndStoreIntakeSpecialty(
   ]);
   if (redFlagResult.error) throw new Error('Routing is unavailable');
 
-  const routing = await routeIntakeToSpecialty(
-    new OpenAISpecialtyRoutingModel(),
-    {
-      structuredIntake: structuredIntake ?? emptyStructuredIntake,
-      redFlagDetected: Boolean(redFlagResult.data),
-    },
-  );
+  const routing = await routeIntakeToSpecialty(createSpecialtyRoutingModel(), {
+    structuredIntake: structuredIntake ?? emptyStructuredIntake,
+    redFlagDetected: Boolean(redFlagResult.data),
+  });
 
   const privileged = createPrivilegedClient();
   const { error } = await privileged.rpc('record_specialty_routing_result', {

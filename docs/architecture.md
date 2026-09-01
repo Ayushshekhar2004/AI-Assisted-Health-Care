@@ -61,5 +61,10 @@ for both allowed and denied access.
 Sensitive storage is private by default. Deliver files through short-lived, authorized access rather
 than public bucket paths or durable URLs.
 
+Server-side text AI workflows depend on a provider abstraction. OpenAI is the default provider;
+Ollama is an optional loopback or explicit RFC1918 private-LAN development provider.
+Provider-specific transport code must return the same Zod-validated domain outputs and must never be
+imported into browser components. Public Ollama hosts and production Ollama configuration are denied.
+
 Changes that require independently deployed services, direct cross-module table ownership, or weaker
 role boundaries need an explicit architecture and security review before implementation.
