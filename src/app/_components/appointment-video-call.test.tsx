@@ -14,22 +14,36 @@ vi.mock('@livekit/components-react', () => ({
   GridLayout: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   ParticipantTile: () => <div>Participant video</div>,
   RoomAudioRenderer: () => null,
+  useRemoteParticipants: () => [],
   useTracks: () => [],
   LiveKitRoom: ({
     children,
     onConnected,
     onDisconnected,
+    onError,
+    onMediaDeviceFailure,
   }: {
     children: ReactNode;
     onConnected: () => void;
     onDisconnected: () => void;
+    onError: () => void;
+    onMediaDeviceFailure: () => void;
   }) => {
-    useEffect(() => onConnected(), [onConnected]);
+    useEffect(() => {
+      onConnected();
+      onConnected();
+    }, [onConnected]);
     return (
       <div>
         {children}
         <button onClick={onDisconnected} type="button">
           Simulate leave
+        </button>
+        <button onClick={onError} type="button">
+          Simulate network failure
+        </button>
+        <button onClick={onMediaDeviceFailure} type="button">
+          Simulate denied media
         </button>
       </div>
     );
@@ -43,6 +57,7 @@ const fetchMock = vi.fn();
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 
 describe('AppointmentVideoCall', () => {
@@ -80,11 +95,61 @@ describe('AppointmentVideoCall', () => {
     expect(JSON.parse(String(fetchMock.mock.calls[1]?.[1]?.body))).toEqual({
       appointmentId,
     });
+    expect(
+      fetchMock.mock.calls.filter(
+        ([request]) => request === '/api/consultation/start',
+      ),
+    ).toHaveLength(1);
+    expect(
+      screen.getByText(/other participant has not joined or was disconnected/i),
+    ).toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Simulate network failure' }),
+    );
+    expect(
+      screen.getByText(/reconnection will be attempted/i),
+    ).toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Simulate denied media' }),
+    );
+    expect(
+      screen.getByText(/camera or microphone access is unavailable/i),
+    ).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Simulate leave' }));
     expect(screen.getByText(/could not reconnect/i)).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: 'Join video consultation' }),
     ).toBeInTheDocument();
+  });
+
+  it('offers a retry without exposing provider details during an outage', async () => {
+    let resolveToken!: (value: { ok: boolean }) => void;
+    fetchMock.mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveToken = resolve;
+      }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    render(<AppointmentVideoCall appointmentId={appointmentId} />);
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Join video consultation' }),
+    );
+
+    expect(
+      screen.getByRole('button', { name: 'Preparing secure call…' }),
+    ).toBeDisabled();
+    resolveToken({ ok: false });
+
+    expect(
+      await screen.findByText(/video provider is unavailable/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Join video consultation' }),
+    ).toBeEnabled();
+    expect(fetchMock).toHaveBeenCalledOnce();
   });
 });

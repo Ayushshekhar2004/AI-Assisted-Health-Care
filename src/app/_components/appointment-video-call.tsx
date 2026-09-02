@@ -9,12 +9,19 @@ import {
   LiveKitRoom,
   ParticipantTile,
   RoomAudioRenderer,
+  useRemoteParticipants,
   useTracks,
 } from '@livekit/components-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Track } from 'livekit-client';
 
+import {
+  fetchWithTimeout,
+  RequestTimeoutError,
+} from '../../lib/client/fetch-with-timeout';
 import { appointmentVideoTokenResponseSchema } from '../../modules/consultation/video';
+
+const VIDEO_REQUEST_TIMEOUT_MILLISECONDS = 15_000;
 
 type VideoConnection = Readonly<{
   serverUrl: string;
@@ -32,22 +39,42 @@ function ParticipantGrid() {
   );
 }
 
+function OtherParticipantState() {
+  const remoteParticipants = useRemoteParticipants();
+  if (remoteParticipants.length > 0) return null;
+  return (
+    <p aria-live="polite" className="consultation-connection-state">
+      The other participant has not joined or was disconnected. Keep this room
+      open for reconnection, or use the text fallback.
+    </p>
+  );
+}
+
 export function AppointmentVideoCall({
   appointmentId,
 }: Readonly<{ appointmentId: string }>) {
   const [connection, setConnection] = useState<VideoConnection | null>(null);
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState('');
+  const startRequestedRef = useRef(false);
 
   async function markConsultationStarted() {
+    if (startRequestedRef.current) return;
+    startRequestedRef.current = true;
     try {
-      await fetch('/api/consultation/start', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ appointmentId }),
-        cache: 'no-store',
-      });
+      const response = await fetchWithTimeout(
+        '/api/consultation/start',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ appointmentId }),
+          cache: 'no-store',
+        },
+        VIDEO_REQUEST_TIMEOUT_MILLISECONDS,
+      );
+      if (!response.ok) throw new Error('Consultation start unavailable');
     } catch {
+      startRequestedRef.current = false;
       // Joining remains available: the database independently prevents an
       // unauthorized status transition and the doctor can retry by rejoining.
     }
@@ -57,19 +84,27 @@ export function AppointmentVideoCall({
     setPending(true);
     setMessage('');
     try {
-      const response = await fetch('/api/consultation/video-token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ appointmentId }),
-        cache: 'no-store',
-      });
+      const response = await fetchWithTimeout(
+        '/api/consultation/video-token',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ appointmentId }),
+          cache: 'no-store',
+        },
+        VIDEO_REQUEST_TIMEOUT_MILLISECONDS,
+      );
       if (!response.ok) throw new Error('Unavailable');
       const result = appointmentVideoTokenResponseSchema.parse(
         await response.json(),
       );
       setConnection({ serverUrl: result.serverUrl, token: result.token });
-    } catch {
-      setMessage('Video consultation is unavailable. Please try again.');
+    } catch (error) {
+      setMessage(
+        error instanceof RequestTimeoutError
+          ? 'The video connection timed out on a slow network. Check your connection and try again.'
+          : 'The video provider is unavailable. Please try again or contact the clinic using your usual channel.',
+      );
     } finally {
       setPending(false);
     }
@@ -103,12 +138,15 @@ export function AppointmentVideoCall({
         onConnected={() => void markConsultationStarted()}
         onDisconnected={() => {
           setConnection(null);
+          startRequestedRef.current = false;
           setMessage(
             'The call ended or could not reconnect. You can join again when ready.',
           );
         }}
         onError={() =>
-          setMessage('The call connection had a problem. Please try again.')
+          setMessage(
+            'The network connection is unstable. Reconnection will be attempted automatically; use text if needed.',
+          )
         }
         onMediaDeviceFailure={() =>
           setMessage(
@@ -123,6 +161,7 @@ export function AppointmentVideoCall({
           Connection: <ConnectionState />
         </p>
         <ParticipantGrid />
+        <OtherParticipantState />
         <ConnectionStateToast />
         <ControlBar
           controls={{

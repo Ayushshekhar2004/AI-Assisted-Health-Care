@@ -14,6 +14,7 @@ afterEach(() => {
   });
   globalThis.RTCPeerConnection = originalPeerConnection;
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 
 function renderVoiceInput() {
@@ -66,7 +67,94 @@ describe('VoiceInput', () => {
 
     await waitFor(() => expect(getUserMedia).toHaveBeenCalledOnce());
     expect(screen.getByText(/voice input is unavailable/i)).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      /microphone permission was denied/i,
+    );
     expect(screen.getByLabelText('Your response')).toHaveFocus();
+  });
+
+  it('stops captured media and offers text recovery during provider outage', async () => {
+    const stop = vi.fn();
+    const getUserMedia = vi.fn().mockResolvedValue({
+      getTracks: () => [{ stop }],
+      getAudioTracks: () => [],
+    });
+    Object.defineProperty(navigator, 'mediaDevices', {
+      configurable: true,
+      value: { getUserMedia },
+    });
+    globalThis.RTCPeerConnection = class {} as typeof RTCPeerConnection;
+    let resolveToken!: (value: { ok: boolean }) => void;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        () =>
+          new Promise((resolve) => {
+            resolveToken = resolve;
+          }),
+      ),
+    );
+    renderVoiceInput();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Enable microphone' }));
+
+    expect(
+      await screen.findByText(/connecting secure voice/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Use text instead' }),
+    ).toBeEnabled();
+    resolveToken({ ok: false });
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      /voice service is unavailable/i,
+    );
+    expect(stop).toHaveBeenCalledOnce();
+    expect(
+      screen.getByRole('button', { name: 'Enable microphone' }),
+    ).toBeEnabled();
+    expect(
+      screen.getByRole('button', { name: 'Use text instead' }),
+    ).toBeEnabled();
+  });
+
+  it('cleans up microphone tracks when the tab is refreshed or component unmounts', async () => {
+    const stop = vi.fn();
+    let resolveToken!: (value: Response) => void;
+    Object.defineProperty(navigator, 'mediaDevices', {
+      configurable: true,
+      value: {
+        getUserMedia: vi.fn().mockResolvedValue({
+          getTracks: () => [{ stop }],
+          getAudioTracks: () => [],
+        }),
+      },
+    });
+    globalThis.RTCPeerConnection = class {} as typeof RTCPeerConnection;
+    const fetchMock = vi.fn(
+      () =>
+        new Promise<Response>((resolve) => {
+          resolveToken = resolve;
+        }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    const textareaRef = createRef<HTMLTextAreaElement>();
+    const view = render(
+      <>
+        <textarea aria-label="Your response" ref={textareaRef} />
+        <VoiceInput
+          disabled={false}
+          sessionId="71000000-0000-4000-8000-000000000001"
+          textareaRef={textareaRef}
+        />
+      </>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Enable microphone' }));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
+    view.unmount();
+    expect(stop).toHaveBeenCalledOnce();
+    resolveToken(new Response(null, { status: 503 }));
   });
 });
 

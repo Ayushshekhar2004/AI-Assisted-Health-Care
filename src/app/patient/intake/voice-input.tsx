@@ -16,6 +16,12 @@ import {
   type IntakeVoiceLanguage,
   type TranscriptConfirmationAssessment,
 } from '../../../modules/intake';
+import {
+  fetchWithTimeout,
+  RequestTimeoutError,
+} from '../../../lib/client/fetch-with-timeout';
+
+const VOICE_REQUEST_TIMEOUT_MILLISECONDS = 15_000;
 
 type VoiceStatus =
   | 'idle'
@@ -124,17 +130,21 @@ export function VoiceInput({
 }: VoiceInputProps) {
   const [language, setLanguage] = useState<IntakeVoiceLanguage>('en');
   const [status, setStatus] = useState<VoiceStatus>('idle');
+  const [recoveryMessage, setRecoveryMessage] = useState('');
   const [pendingTranscript, setPendingTranscript] =
     useState<PendingTranscript | null>(null);
   const peerRef = useRef<RTCPeerConnection | null>(null);
   const channelRef = useRef<RTCDataChannel | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const requestControllerRef = useRef<AbortController | null>(null);
   const transcriptItemsRef = useRef(new Set<string>());
 
   const closeConnection = useCallback(() => {
     if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
     closeTimerRef.current = null;
+    requestControllerRef.current?.abort();
+    requestControllerRef.current = null;
     streamRef.current?.getTracks().forEach((track) => track.stop());
     streamRef.current = null;
     channelRef.current?.close();
@@ -158,6 +168,7 @@ export function VoiceInput({
     if (status !== 'idle' && status !== 'error') return;
     closeConnection();
     setPendingTranscript(null);
+    setRecoveryMessage('');
     transcriptItemsRef.current.clear();
 
     if (
@@ -175,13 +186,20 @@ export function VoiceInput({
       });
       streamRef.current = stream;
       setStatus('connecting');
+      const requestController = new AbortController();
+      requestControllerRef.current = requestController;
 
-      const tokenResponse = await fetch('/api/intake/realtime-session', {
-        method: 'POST',
-        credentials: 'same-origin',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId, language }),
-      });
+      const tokenResponse = await fetchWithTimeout(
+        '/api/intake/realtime-session',
+        {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId, language }),
+          signal: requestController.signal,
+        },
+        VOICE_REQUEST_TIMEOUT_MILLISECONDS,
+      );
       if (!tokenResponse.ok) throw new Error('Voice session unavailable');
       const clientSecret = realtimeClientSecretResponseSchema.parse(
         await tokenResponse.json(),
@@ -235,12 +253,23 @@ export function VoiceInput({
       channel.addEventListener('error', () => {
         closeConnection();
         setStatus('error');
+        setRecoveryMessage(
+          'The voice connection was interrupted. Try the microphone again or continue with text.',
+        );
+      });
+      channel.addEventListener('close', () => {
+        if (streamRef.current === null) return;
+        closeConnection();
+        setStatus('error');
+        setRecoveryMessage(
+          'The voice connection was interrupted. Try the microphone again or continue with text.',
+        );
       });
 
       const offer = await peer.createOffer();
       if (!offer.sdp) throw new Error('Voice connection unavailable');
       await peer.setLocalDescription(offer);
-      const callResponse = await fetch(
+      const callResponse = await fetchWithTimeout(
         'https://api.openai.com/v1/realtime/calls',
         {
           method: 'POST',
@@ -249,18 +278,32 @@ export function VoiceInput({
             'Content-Type': 'application/sdp',
           },
           body: offer.sdp,
+          signal: requestController.signal,
         },
+        VOICE_REQUEST_TIMEOUT_MILLISECONDS,
       );
       if (!callResponse.ok) throw new Error('Voice connection unavailable');
       await peer.setRemoteDescription({
         type: 'answer',
         sdp: await callResponse.text(),
       });
+      requestControllerRef.current = null;
     } catch (error) {
       closeConnection();
       setStatus('error');
       if (error instanceof DOMException && error.name === 'NotAllowedError') {
+        setRecoveryMessage(
+          'Microphone permission was denied. Allow microphone access in browser settings or continue with text.',
+        );
         textareaRef.current?.focus();
+      } else if (error instanceof RequestTimeoutError) {
+        setRecoveryMessage(
+          'The voice connection timed out on a slow network. Try again or continue with text.',
+        );
+      } else {
+        setRecoveryMessage(
+          'The voice service is unavailable. Try again later or continue with text.',
+        );
       }
     }
   }
@@ -327,6 +370,7 @@ export function VoiceInput({
       <p aria-live="polite" className="auth-message" role="status">
         {STATUS_MESSAGES[status]}
       </p>
+      {recoveryMessage ? <p role="alert">{recoveryMessage}</p> : null}
       {pendingTranscript ? (
         <TranscriptConfirmation
           disabled={disabled}
