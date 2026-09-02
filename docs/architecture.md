@@ -158,3 +158,8 @@ operational evidence, not an audit ledger, and must never receive clinical text 
 The public `/health` route is liveness-only and bypasses dependency/session checks. Detailed active
 readiness probes and recent process-local failure counts are available only inside the authorized
 operations area. Probe results expose categorical status and latency, never endpoints or errors.
+
+Deployment environments are explicit trust boundaries. Development, staging, and production use
+separate Supabase projects, databases, Auth tenants, and private storage buckets. Configuration
+markers must match the project URL and resource namespace before the app connects. See
+`docs/environment-management.md`.

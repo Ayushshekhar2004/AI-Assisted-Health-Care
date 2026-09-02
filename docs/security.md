@@ -150,6 +150,12 @@ the following controls:
 Tests and local development must use synthetic records. Privileged keys from production must never be
 used outside their approved production environment.
 
+Development, staging, and production credentials and Supabase projects are never shared. Runtime
+configuration validates the environment marker, project reference, URL, and resource namespace.
+Development utilities additionally require a loopback database/API and fail closed for staging,
+production, missing markers, or `NODE_ENV=production`. Secret ownership and rotation requirements
+are defined in `docs/environment-management.md`.
+
 ## Dependency vulnerability remediation
 
 Run `npm run audit:dependencies` before merging dependency changes and in CI. For every high or

@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 
 import { z } from 'zod';
+import { assertDevelopmentUtilityEnvironment } from './development-guard.mjs';
 
 export const DEMO_SEED_CONFIRMATION = 'LOCAL_DEMO_ONLY';
 
@@ -56,6 +57,7 @@ export function selectLocalDatabaseContainer(containerNames) {
 }
 
 export function runDemoSeed(environment = process.env) {
+  assertDevelopmentUtilityEnvironment(environment);
   if (environment.DEMO_SEED_CONFIRM !== DEMO_SEED_CONFIRMATION) {
     throw new Error(
       `Demo seed blocked: set DEMO_SEED_CONFIRM=${DEMO_SEED_CONFIRMATION} explicitly.`,

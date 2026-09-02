@@ -60,7 +60,7 @@ With the local Supabase stack running, create a clean synthetic demo dataset wit
 doctors, controlled specialties, future availability, and requested/confirmed appointments:
 
 ```bash
-DEMO_SEED_CONFIRM=LOCAL_DEMO_ONLY npm run seed:demo
+APP_ENV=development DEMO_SEED_CONFIRM=LOCAL_DEMO_ONLY npm run seed:demo
 ```
 
 The runner fails closed unless that exact confirmation is supplied, both discovered Supabase URLs
@@ -71,6 +71,11 @@ labels. Running it again replaces only its fixed demo records; it does not reset
 The fixture accounts intentionally have no usable password. Create/login with a normal local
 development account when testing authentication; the seeded records support search, scheduling,
 dashboard, and appointment-state demonstrations without committing credentials.
+
+Environment isolation, deployment variables, secret ownership, and rotation are documented in
+[`docs/environment-management.md`](docs/environment-management.md).
+The controlled staging migration and smoke-test procedure is in
+[`docs/staging-deployment.md`](docs/staging-deployment.md).
 
 ### Local Ollama text AI
 
