@@ -5,6 +5,7 @@ import { z } from 'zod';
 
 import { getSupabaseAdminConfig } from '@/lib/supabase/admin-config';
 import { createClient } from '@/lib/supabase/server';
+import { createRoleAuthorizedClient } from '@/modules/auth';
 import { pilotSpecialtySchema } from '@/modules/doctor';
 import { intakeStructuredOutputSchema } from '@/modules/intake';
 import {
@@ -421,10 +422,10 @@ export async function getOwnConsultationNote(
   appointmentIdInput: unknown,
 ): Promise<ConsultationNote | null> {
   const appointmentId = parseAppointmentDetailId(appointmentIdInput);
-  const supabase = await createClient();
-  const { data: authData, error: authError } = await supabase.auth.getUser();
-  if (authError || !authData.user)
-    throw new Error('Consultation note is unavailable');
+  const { supabase } = await createRoleAuthorizedClient(
+    ['patient', 'doctor'],
+    'Consultation note is unavailable',
+  );
   const { data, error } = await supabase.rpc('get_own_consultation', {
     p_appointment_id: appointmentId,
   });

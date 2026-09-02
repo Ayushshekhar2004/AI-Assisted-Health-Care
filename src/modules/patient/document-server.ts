@@ -1,7 +1,7 @@
 import 'server-only';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
-import { createClient } from '@/lib/supabase/server';
+import { createRoleAuthorizedClient } from '@/modules/auth';
 import { validatePatientDocument } from './document-validation';
 
 const appointmentIdSchema = z.string().uuid();
@@ -51,8 +51,11 @@ export async function uploadOwnPatientDocument(
   const appointmentId = appointmentIdSchema.parse(appointmentIdInput);
   const metadata = await validatePatientDocument(file);
   const documentId = randomUUID();
-  const objectPath = `${await requireUserId()}/${documentId}.${metadata.extension}`;
-  const supabase = await createClient();
+  const { supabase, userId } = await createRoleAuthorizedClient(
+    ['patient'],
+    'Document upload is unavailable',
+  );
+  const objectPath = `${userId}/${documentId}.${metadata.extension}`;
   const uploaded = await supabase.storage
     .from('patient-documents')
     .upload(objectPath, file, {
@@ -77,18 +80,13 @@ export async function uploadOwnPatientDocument(
   return documentId;
 }
 
-async function requireUserId(): Promise<string> {
-  const supabase = await createClient();
-  const auth = await supabase.auth.getUser();
-  if (auth.error || !auth.data.user)
-    throw new Error('Document upload is unavailable');
-  return auth.data.user.id;
-}
-
 export async function listOwnPatientDocuments(
   appointmentIdInput: unknown,
 ): Promise<PatientDocument[]> {
-  const supabase = await createClient();
+  const { supabase } = await createRoleAuthorizedClient(
+    ['patient'],
+    'Documents are unavailable',
+  );
   const result = await supabase.rpc('list_own_patient_documents', {
     p_appointment_id: appointmentIdSchema.parse(appointmentIdInput),
   });
@@ -102,7 +100,10 @@ export async function listOwnPatientDocuments(
 export async function createOwnPatientDocumentDownload(
   documentIdInput: unknown,
 ): Promise<{ url: string; filename: string }> {
-  const supabase = await createClient();
+  const { supabase } = await createRoleAuthorizedClient(
+    ['patient'],
+    'Document is unavailable',
+  );
   const result = await supabase.rpc('authorize_patient_document_download', {
     p_document_id: z.string().uuid().parse(documentIdInput),
   });
@@ -119,7 +120,10 @@ export async function createOwnPatientDocumentDownload(
 export async function listAssignedAppointmentDocuments(
   appointmentIdInput: unknown,
 ): Promise<PatientDocument[]> {
-  const supabase = await createClient();
+  const { supabase } = await createRoleAuthorizedClient(
+    ['doctor'],
+    'Documents are unavailable',
+  );
   const result = await supabase.rpc('list_assigned_appointment_documents', {
     p_appointment_id: appointmentIdSchema.parse(appointmentIdInput),
   });
@@ -133,7 +137,10 @@ export async function listAssignedAppointmentDocuments(
 export async function createDoctorDocumentDownload(
   documentIdInput: unknown,
 ): Promise<string> {
-  const supabase = await createClient();
+  const { supabase } = await createRoleAuthorizedClient(
+    ['doctor'],
+    'Document is unavailable',
+  );
   const result = await supabase.rpc('authorize_doctor_document_download', {
     p_document_id: z.string().uuid().parse(documentIdInput),
   });

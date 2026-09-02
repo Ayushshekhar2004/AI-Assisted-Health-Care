@@ -57,6 +57,28 @@ and sanitized error categories. Redact at the point of collection rather than re
 downstream log processor. Do not send sensitive content to analytics, crash reporting, tracing, or
 third-party monitoring systems.
 
+Application security logs must use the centralized allow-listed logger, which redacts sensitive key
+names and rejects nested or arbitrary values. Do not pass clinical content to the logger and do not
+assume redaction makes patient content safe to collect.
+
+## Web request protections
+
+- State-changing requests require a same-origin `Origin` header. Next.js Server Actions retain their
+  built-in origin validation, and middleware adds the same check before auth and intake actions.
+- Supabase session cookies are normalized to `HttpOnly`, `SameSite=Lax`, root path, and `Secure` on
+  HTTPS responses. Authentication state must not be copied into browser storage.
+- Auth, intake, realtime-token, video-token, and consultation-start endpoints have bounded
+  fixed-window rate limits and request-size limits. Rate-limit identifiers are pseudonymized with a
+  server-only salt and are never logged.
+- JSON token endpoints stream and reject bodies larger than 4 KiB before parsing. Form inputs retain
+  their stricter Zod field limits; document uploads retain their separate validated 10 MiB limit.
+- Global headers deny framing and MIME sniffing, restrict browser capabilities and referrers, and set
+  a restrictive CSP. The CSP permits inline styles and scripts required by the current Next.js
+  runtime; replacing that allowance with per-request nonces remains preferred before production.
+
+The built-in limiter is per application process. A multi-instance production deployment must replace
+its storage with an approved shared atomic backend while preserving the same fail-closed interface.
+
 ## Storage, transport, and secrets
 
 - Keep clinical files and records private by default and encrypt them in transit and at rest.
@@ -88,6 +110,22 @@ the following controls:
 
 Tests and local development must use synthetic records. Privileged keys from production must never be
 used outside their approved production environment.
+
+## Dependency vulnerability remediation
+
+Run `npm run audit:dependencies` before merging dependency changes and in CI. For every high or
+critical finding:
+
+1. confirm the affected package and reachable code path without copying secrets or patient data into
+   an issue;
+2. prefer a compatible direct or transitive dependency upgrade and review the lockfile diff;
+3. run the full application, database, lint, typecheck, and production-build checks;
+4. document the advisory, resolved version, and verification evidence; and
+5. if no fix exists, block release unless the security owner records a time-bounded exception with
+   compensating controls and an explicit review date.
+
+Do not run automated force upgrades without reviewing breaking changes. Moderate or lower findings
+still require triage for reachability and healthcare-data impact.
 
 ## Security verification before merge
 

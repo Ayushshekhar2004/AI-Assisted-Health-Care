@@ -2,7 +2,7 @@ import 'server-only';
 
 import { z } from 'zod';
 
-import { createClient } from '@/lib/supabase/server';
+import { createRoleAuthorizedClient } from '@/modules/auth';
 
 import {
   followUpRecommendationInputSchema,
@@ -34,7 +34,10 @@ export async function createFollowUpRecommendation(
   input: unknown,
 ): Promise<void> {
   const value = followUpRecommendationInputSchema.parse(input);
-  const supabase = await createClient();
+  const { supabase } = await createRoleAuthorizedClient(
+    ['doctor'],
+    'Follow-up recommendation is unavailable',
+  );
   const { error } = await supabase.rpc('create_follow_up_recommendation', {
     p_appointment_id: value.appointmentId,
     p_timing: value.timing,
@@ -46,7 +49,10 @@ export async function getOwnFollowUpRecommendation(
   appointmentIdInput: unknown,
 ): Promise<FollowUpRecommendation | null> {
   const appointmentId = z.string().uuid().parse(appointmentIdInput);
-  const supabase = await createClient();
+  const { supabase } = await createRoleAuthorizedClient(
+    ['patient', 'doctor'],
+    'Follow-up recommendation is unavailable',
+  );
   const { data, error } = await supabase.rpc('get_follow_up_recommendation', {
     p_appointment_id: appointmentId,
   });

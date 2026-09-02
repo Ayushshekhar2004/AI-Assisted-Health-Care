@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "audit:dependencies": "npm audit --audit-level=high",
     "start": "next start",
     "lint": "eslint . --max-warnings=0",
     "format": "prettier --write .",

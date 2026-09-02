@@ -23,7 +23,13 @@ export async function updateSession(
         );
         response = NextResponse.next({ request });
         cookiesToSet.forEach(({ name, options, value }) => {
-          response.cookies.set(name, value, options);
+          response.cookies.set(name, value, {
+            ...options,
+            httpOnly: true,
+            path: '/',
+            sameSite: 'lax',
+            secure: request.nextUrl.protocol === 'https:',
+          });
         });
       },
     },

@@ -1,6 +1,6 @@
 import 'server-only';
 import { z } from 'zod';
-import { createClient } from '@/lib/supabase/server';
+import { createRoleAuthorizedClient } from '@/modules/auth';
 import {
   consultationOutcomeInputSchema,
   consultationOutcomeSchema,
@@ -9,10 +9,10 @@ import {
 
 export async function recordConsultationOutcome(input: unknown): Promise<void> {
   const value = consultationOutcomeInputSchema.parse(input);
-  const supabase = await createClient();
-  const { data: auth, error: authError } = await supabase.auth.getUser();
-  if (authError || !auth.user)
-    throw new Error('Consultation outcome is unavailable');
+  const { supabase } = await createRoleAuthorizedClient(
+    ['doctor'],
+    'Consultation outcome is unavailable',
+  );
   const { error } = await supabase.rpc('record_consultation_outcome', {
     p_appointment_id: value.appointmentId,
     p_outcome: value.outcome,
@@ -28,10 +28,10 @@ export async function getOwnConsultationOutcome(
   id: unknown,
 ): Promise<ConsultationOutcome | null> {
   const appointmentId = z.string().uuid().parse(id);
-  const supabase = await createClient();
-  const { data: auth, error: authError } = await supabase.auth.getUser();
-  if (authError || !auth.user)
-    throw new Error('Consultation outcome is unavailable');
+  const { supabase } = await createRoleAuthorizedClient(
+    ['patient', 'doctor'],
+    'Consultation outcome is unavailable',
+  );
   const { data, error } = await supabase.rpc('get_own_consultation_outcome', {
     p_appointment_id: appointmentId,
   });

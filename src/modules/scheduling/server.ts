@@ -1,7 +1,6 @@
 import { z } from 'zod';
 
-import { createClient } from '@/lib/supabase/server';
-import type { ProfileRole } from '@/modules/auth';
+import { createRoleAuthorizedClient, type ProfileRole } from '@/modules/auth';
 import { dispatchNotificationEventsForAppointment } from '@/modules/notification/server';
 
 import {
@@ -114,21 +113,12 @@ export type DoctorDashboardPage = Readonly<{
 }>;
 
 async function createAuthorizedClient(requiredRole: ProfileRole) {
-  const supabase = await createClient();
-  const { data: authData, error: authError } = await supabase.auth.getUser();
-  if (authError || !authData.user) throw new Error('Scheduling is unavailable');
-
-  const profile = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('auth_user_id', authData.user.id)
-    .maybeSingle();
-
-  if (profile.error || profile.data?.role !== requiredRole) {
-    throw new Error('Scheduling is unavailable');
-  }
-
-  return supabase;
+  return (
+    await createRoleAuthorizedClient(
+      [requiredRole],
+      'Scheduling is unavailable',
+    )
+  ).supabase;
 }
 
 export async function listOwnDoctorAvailability(): Promise<
@@ -274,9 +264,10 @@ export async function transitionAppointmentStatus(
   input: unknown,
 ): Promise<void> {
   const transition = appointmentTransitionSchema.parse(input);
-  const supabase = await createClient();
-  const { data: authData, error: authError } = await supabase.auth.getUser();
-  if (authError || !authData.user) throw new Error('Scheduling is unavailable');
+  const { supabase } = await createRoleAuthorizedClient(
+    ['patient', 'doctor'],
+    'Scheduling is unavailable',
+  );
 
   const { error } = await supabase.rpc('transition_appointment_status', {
     p_appointment_id: transition.appointmentId,
@@ -293,7 +284,10 @@ export async function listAppointmentRescheduleOptions(
   appointmentIdInput: unknown,
 ): Promise<AppointmentRescheduleOption[]> {
   const appointmentId = z.string().uuid().parse(appointmentIdInput);
-  const supabase = await createClient();
+  const { supabase } = await createRoleAuthorizedClient(
+    ['patient', 'doctor'],
+    'Reschedule options are unavailable',
+  );
   const { data, error } = await supabase.rpc(
     'list_appointment_reschedule_options',
     { p_appointment_id: appointmentId },
@@ -310,7 +304,10 @@ export async function listAppointmentRescheduleOptions(
 
 export async function cancelOwnAppointment(input: unknown): Promise<void> {
   const cancellation = appointmentCancellationSchema.parse(input);
-  const supabase = await createClient();
+  const { supabase } = await createRoleAuthorizedClient(
+    ['patient', 'doctor'],
+    'Appointment cancellation is unavailable',
+  );
   const { error } = await supabase.rpc('cancel_appointment', {
     p_appointment_id: cancellation.appointmentId,
     p_reason_category: cancellation.reasonCategory,
@@ -325,7 +322,10 @@ export async function rescheduleOwnAppointment(
   input: unknown,
 ): Promise<string> {
   const reschedule = appointmentRescheduleSchema.parse(input);
-  const supabase = await createClient();
+  const { supabase } = await createRoleAuthorizedClient(
+    ['patient', 'doctor'],
+    'Appointment rescheduling is unavailable',
+  );
   const { data, error } = await supabase.rpc('reschedule_appointment', {
     p_appointment_id: reschedule.appointmentId,
     p_new_availability_id: reschedule.availabilityId,

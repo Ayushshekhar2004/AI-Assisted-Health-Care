@@ -2,7 +2,7 @@ import 'server-only';
 
 import { z } from 'zod';
 
-import { createClient } from '@/lib/supabase/server';
+import { createRoleAuthorizedClient } from '@/modules/auth';
 import { dispatchNotificationEventsForAppointment } from '@/modules/notification/server';
 
 import { getLiveKitConfig } from './livekit-config';
@@ -31,11 +31,10 @@ export async function createAppointmentVideoToken(
   untrustedInput: unknown,
 ): Promise<AppointmentVideoToken> {
   const input = appointmentVideoTokenRequestSchema.parse(untrustedInput);
-  const supabase = await createClient();
-  const { data: authData, error: authError } = await supabase.auth.getUser();
-  if (authError || !authData.user) {
-    throw new Error('Video consultation is unavailable');
-  }
+  const { supabase, userId } = await createRoleAuthorizedClient(
+    ['patient', 'doctor'],
+    'Video consultation is unavailable',
+  );
 
   const { data, error } = await supabase.rpc(
     'authorize_appointment_video_token',
@@ -53,7 +52,7 @@ export async function createAppointmentVideoToken(
       apiSecret: config.apiSecret,
       appointmentId: input.appointmentId,
       participantRole,
-      userId: authData.user.id,
+      userId,
     }),
     expiresAt: new Date(
       Date.now() + VIDEO_TOKEN_TTL_SECONDS * 1000,
@@ -65,11 +64,10 @@ export async function startAppointmentConsultation(
   untrustedInput: unknown,
 ): Promise<AppointmentConsultationStart> {
   const input = appointmentConsultationStartRequestSchema.parse(untrustedInput);
-  const supabase = await createClient();
-  const { data: authData, error: authError } = await supabase.auth.getUser();
-  if (authError || !authData.user) {
-    throw new Error('Consultation is unavailable');
-  }
+  const { supabase } = await createRoleAuthorizedClient(
+    ['patient', 'doctor'],
+    'Consultation is unavailable',
+  );
 
   const { data, error } = await supabase.rpc('start_appointment_consultation', {
     p_appointment_id: input.appointmentId,

@@ -107,6 +107,7 @@ npm test
 npm run lint
 npm run typecheck
 npm run build
+npm run audit:dependencies
 ```
 
 Database changes must also pass the Supabase migration and pgTAP test workflow before merging.

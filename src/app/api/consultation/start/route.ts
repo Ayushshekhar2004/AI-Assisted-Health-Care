@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { readLimitedJson } from '../../../../lib/security/request';
 
 import {
   appointmentConsultationStartRequestSchema,
@@ -26,7 +27,7 @@ export async function POST(request: NextRequest) {
 
   let body: unknown;
   try {
-    body = await request.json();
+    body = await readLimitedJson(request);
   } catch {
     return NextResponse.json(unavailable, {
       status: 400,

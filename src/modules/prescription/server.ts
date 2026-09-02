@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { z } from 'zod';
-import { createClient } from '@/lib/supabase/server';
+import { createRoleAuthorizedClient } from '@/modules/auth';
 import {
   prescriptionInputSchema,
   prescriptionSchema,
@@ -9,21 +9,12 @@ import {
 } from './validation';
 
 async function authorizedClient(requiredRole?: 'doctor') {
-  const supabase = await createClient();
-  const { data: authData, error: authError } = await supabase.auth.getUser();
-  if (authError || !authData.user)
-    throw new Error('Prescription is unavailable');
-  if (requiredRole) {
-    const profile = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('auth_user_id', authData.user.id)
-      .maybeSingle();
-    if (profile.error || profile.data?.role !== requiredRole) {
-      throw new Error('Prescription is unavailable');
-    }
-  }
-  return supabase;
+  return (
+    await createRoleAuthorizedClient(
+      requiredRole ? [requiredRole] : ['patient', 'doctor'],
+      'Prescription is unavailable',
+    )
+  ).supabase;
 }
 
 function dbItems(items: z.infer<typeof prescriptionInputSchema>['items']) {
