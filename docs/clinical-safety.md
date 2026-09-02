@@ -36,6 +36,12 @@ fallbacks are required where red-flag handling is implemented. AI confidence mus
 downgrade, or clear a red flag. If an AI service is unavailable, malformed, or uncertain, the system
 must fail safely and retain applicable escalation.
 
+For a text-intake AI timeout, outage, or invalid response, the submitted patient text remains
+available for clinician review while missing structured fields remain explicit; the product must not
+invent replacements. Specialty routing then uses General Medicine as a deterministic fallback. Low
+routing confidence also selects General Medicine. Safe-care classification failure suppresses
+normal interim guidance. None of these fallbacks may clear or downgrade a deterministic red flag.
+
 The application is not an emergency response service. User-facing content must not imply continuous
 monitoring or guaranteed clinician response unless those capabilities are operationally verified.
 

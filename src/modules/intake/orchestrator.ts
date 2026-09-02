@@ -53,6 +53,36 @@ export type IntakeOrchestratorResult = Readonly<{
   structured: IntakeStructuredOutput;
 }>;
 
+export function createManualIntakeFallback(
+  previous: IntakeStructuredOutput | null,
+): IntakeOrchestratorResult {
+  const structured = intakeStructuredOutputSchema.parse({
+    ...(previous ?? {
+      chief_complaint: null,
+      onset: null,
+      duration: null,
+      severity: null,
+      associated_symptoms: [],
+      relevant_history: [],
+      current_medicines: [],
+      allergies: [],
+      pregnancy_possibility: {
+        clinically_relevant: false,
+        response: 'not_clinically_relevant',
+      },
+      missing_information: [...intakeFieldSchema.options],
+    }),
+    follow_up_question: null,
+    intake_complete: true,
+  });
+  return {
+    assistantText:
+      'AI assistance is unavailable. Your text was saved for manual clinician review, and routing will use General Medicine.',
+    intakeComplete: true,
+    structured,
+  };
+}
+
 export async function orchestrateIntake(
   model: IntakeModel,
   input: IntakeModelInput,

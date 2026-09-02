@@ -1,5 +1,8 @@
 import { z } from 'zod';
 
+import { withAISecurityInstructions } from '../../lib/ai/prompt-security';
+import { isAIFailure, runAIWorkflow } from '../../lib/ai/failure';
+
 import { intakeStructuredOutputSchema } from '../intake';
 
 export const SAFE_CARE_LIBRARY_VERSION = 'safe-care-development-v1';
@@ -410,9 +413,15 @@ export async function createSafeCareGuidance(
   if (input.redFlagDetected) return suppressed('EMERGENCY', input.language);
   if (hasHighRiskContext(input)) return suppressed('HIGH_RISK', input.language);
 
-  const classification = safeCareClassificationSchema.parse(
-    await model.generate(input),
-  );
+  let classification: z.infer<typeof safeCareClassificationSchema>;
+  try {
+    classification = await runAIWorkflow('safe_care', async () =>
+      safeCareClassificationSchema.parse(await model.generate(input)),
+    );
+  } catch (error) {
+    if (!isAIFailure(error)) throw error;
+    return suppressed('UNSUPPORTED', input.language);
+  }
   if (classification.symptom_category === 'UNSUPPORTED')
     return suppressed('UNSUPPORTED', input.language);
   return safeCareGuidanceSchema.parse({
@@ -454,9 +463,11 @@ function suppressed(
   });
 }
 
-export const SAFE_CARE_CLASSIFICATION_INSTRUCTIONS = `
+export const SAFE_CARE_CLASSIFICATION_INSTRUCTIONS = withAISecurityInstructions(
+  `
 Classify the structured patient intake into exactly one allowed symptom category.
 Do not diagnose, recommend medicine, antibiotics, treatment, or dosage. Do not produce advice.
 Use UNSUPPORTED unless the intake clearly describes a mild, low-risk example matching one category.
 Return only the required structured classification.
-`.trim();
+`.trim(),
+);

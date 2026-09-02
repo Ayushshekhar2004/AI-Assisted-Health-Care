@@ -11,6 +11,13 @@ import { DEFAULT_PILOT_SPECIALTY } from '../doctor';
 
 import { z } from 'zod';
 
+import {
+  isAIFailure,
+  recordAILowConfidence,
+  runAIWorkflow,
+  type AIFailureCode,
+} from '../../lib/ai/failure';
+
 export const ROUTING_CONFIDENCE_THRESHOLD = 0.65;
 export const ROUTING_POLICY_VERSION = 'specialty-routing-policy-v1';
 
@@ -19,6 +26,9 @@ export const routingFallbackReasonSchema = z.enum([
   'INSUFFICIENT_DATA',
   'MULTI_SYSTEM',
   'RED_FLAG',
+  'AI_TIMEOUT',
+  'INVALID_AI_OUTPUT',
+  'PROVIDER_UNAVAILABLE',
 ]);
 
 const routingModelResultSchema = z
@@ -32,7 +42,7 @@ const routingModelResultSchema = z
 export const finalRoutingResultSchema = routingOutputFormatSchema
   .extend({
     decision_source: z.enum(['AI', 'DETERMINISTIC_FALLBACK']),
-    fallback_reasons: z.array(routingFallbackReasonSchema).max(4),
+    fallback_reasons: z.array(routingFallbackReasonSchema).max(5),
   })
   .strict()
   .superRefine((result, context) => {
@@ -90,10 +100,22 @@ export async function routeIntakeToSpecialty(
   untrustedInput: unknown,
 ): Promise<SpecialtyRoutingServiceResult> {
   const input = routingInputSchema.parse(untrustedInput);
-  const modelResult = routingModelResultSchema.parse(
-    await model.generate(input),
-  );
-  const output = routingOutputSchema.parse(modelResult.output);
+  let modelResult: z.infer<typeof routingModelResultSchema>;
+  let output: RoutingOutput;
+  try {
+    ({ modelResult, output } = await runAIWorkflow('routing', async () => {
+      const generated = routingModelResultSchema.parse(
+        await model.generate(input),
+      );
+      return {
+        modelResult: generated,
+        output: routingOutputSchema.parse(generated.output),
+      };
+    }));
+  } catch (error) {
+    if (!isAIFailure(error)) throw error;
+    return createUnavailableRoutingFallback(input, error.code);
+  }
 
   if (input.redFlagDetected && output.urgency !== 'EMERGENCY') {
     throw new Error('Routing output cannot downgrade a deterministic red flag');
@@ -102,6 +124,7 @@ export async function routeIntakeToSpecialty(
   const fallbackReasons: RoutingFallbackReason[] = [];
   if (output.confidence < ROUTING_CONFIDENCE_THRESHOLD) {
     fallbackReasons.push('LOW_CONFIDENCE');
+    recordAILowConfidence('routing');
   }
   if (
     !input.structuredIntake.intake_complete ||
@@ -134,5 +157,44 @@ export async function routeIntakeToSpecialty(
     routingPolicyVersion: ROUTING_POLICY_VERSION,
     modelOutput: output,
     routingResult,
+  };
+}
+
+function createUnavailableRoutingFallback(
+  input: RoutingInput,
+  failureCode: AIFailureCode,
+): SpecialtyRoutingServiceResult {
+  const failureReason: RoutingFallbackReason =
+    failureCode === 'TIMEOUT'
+      ? 'AI_TIMEOUT'
+      : failureCode === 'INVALID_RESPONSE'
+        ? 'INVALID_AI_OUTPUT'
+        : 'PROVIDER_UNAVAILABLE';
+  const fallbackReasons: RoutingFallbackReason[] = [failureReason];
+  if (!input.structuredIntake.intake_complete) {
+    fallbackReasons.push('INSUFFICIENT_DATA');
+  }
+  if (input.redFlagDetected) fallbackReasons.push('RED_FLAG');
+  const output = routingOutputSchema.parse({
+    recommended_specialty: DEFAULT_PILOT_SPECIALTY,
+    alternate_specialty: null,
+    urgency: input.redFlagDetected ? 'EMERGENCY' : 'ROUTINE',
+    rationale_for_doctor:
+      'AI routing was unavailable; General Medicine was selected by deterministic fallback.',
+    confidence: 0,
+    missing_information: input.structuredIntake.missing_information,
+  });
+  return {
+    modelName: 'deterministic-fallback',
+    modelVersion: ROUTING_POLICY_VERSION,
+    promptVersion: ROUTING_PROMPT_VERSION,
+    routingSchemaVersion: ROUTING_SCHEMA_VERSION,
+    routingPolicyVersion: ROUTING_POLICY_VERSION,
+    modelOutput: output,
+    routingResult: finalRoutingResultSchema.parse({
+      ...output,
+      decision_source: 'DETERMINISTIC_FALLBACK',
+      fallback_reasons: fallbackReasons,
+    }),
   };
 }

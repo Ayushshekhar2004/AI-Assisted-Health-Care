@@ -1,9 +1,10 @@
 import 'server-only';
 import OpenAI from 'openai';
 import { zodTextFormat } from 'openai/helpers/zod';
+import { serializeUntrustedAIData } from '../../lib/ai/prompt-security';
 import {
   CONSULTATION_AI_DRAFT_INSTRUCTIONS,
-  consultationAIDraftOutputSchema,
+  consultationAIDraftOutputFormatSchema,
   type ConsultationAIDraftInput,
   type ConsultationAIDraftModel,
 } from './ai-draft';
@@ -18,11 +19,19 @@ export class OpenAIConsultationDraftModel implements ConsultationAIDraftModel {
       max_output_tokens: 1400,
       input: [
         { role: 'developer', content: CONSULTATION_AI_DRAFT_INSTRUCTIONS },
-        { role: 'user', content: JSON.stringify(input) },
+        {
+          role: 'user',
+          content: serializeUntrustedAIData(
+            'consultation_draft_context',
+            input,
+          ),
+        },
       ],
+      tools: [],
+      tool_choice: 'none',
       text: {
         format: zodTextFormat(
-          consultationAIDraftOutputSchema,
+          consultationAIDraftOutputFormatSchema,
           'consultation_note_draft',
         ),
       },

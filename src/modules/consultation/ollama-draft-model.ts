@@ -1,9 +1,11 @@
 import 'server-only';
 
 import { generateOllamaStructured } from '@/lib/ai/ollama-chat';
+import { serializeUntrustedAIData } from '../../lib/ai/prompt-security';
 
 import {
   CONSULTATION_AI_DRAFT_INSTRUCTIONS,
+  consultationAIDraftOutputFormatSchema,
   consultationAIDraftOutputSchema,
   type ConsultationAIDraftInput,
   type ConsultationAIDraftModel,
@@ -12,11 +14,18 @@ import {
 export class OllamaConsultationDraftModel implements ConsultationAIDraftModel {
   async generate(input: ConsultationAIDraftInput): Promise<unknown> {
     const result = await generateOllamaStructured({
-      schema: consultationAIDraftOutputSchema,
+      schema: consultationAIDraftOutputFormatSchema,
+      responseSchema: consultationAIDraftOutputSchema,
       schemaName: 'consultation_note_draft',
       messages: [
         { role: 'system', content: CONSULTATION_AI_DRAFT_INSTRUCTIONS },
-        { role: 'user', content: JSON.stringify(input) },
+        {
+          role: 'user',
+          content: serializeUntrustedAIData(
+            'consultation_draft_context',
+            input,
+          ),
+        },
       ],
     });
     return {

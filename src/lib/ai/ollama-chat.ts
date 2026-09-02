@@ -4,34 +4,16 @@ import { zodTextFormat } from 'openai/helpers/zod';
 import { z, type ZodType } from 'zod';
 
 import { getOllamaConfig } from './provider-config';
+import { AIProviderError } from './provider-error';
+
+export {
+  AIProviderError,
+  isAIProviderError,
+  type AIProviderErrorCode,
+} from './provider-error';
 
 const OLLAMA_TIMEOUT_MS = 30_000;
 const OLLAMA_MAX_STRUCTURED_ATTEMPTS = 2;
-
-export type AIProviderErrorCode = 'INVALID_RESPONSE' | 'UNAVAILABLE';
-
-export class AIProviderError extends Error {
-  constructor(public readonly code: AIProviderErrorCode) {
-    super(
-      code === 'UNAVAILABLE'
-        ? 'Local AI service is unavailable'
-        : 'Local AI response is invalid',
-    );
-    this.name = 'AIProviderError';
-  }
-}
-
-export function isAIProviderError(error: unknown): error is AIProviderError {
-  return (
-    error instanceof AIProviderError ||
-    (typeof error === 'object' &&
-      error !== null &&
-      'name' in error &&
-      error.name === 'AIProviderError' &&
-      'code' in error &&
-      (error.code === 'INVALID_RESPONSE' || error.code === 'UNAVAILABLE'))
-  );
-}
 
 const ollamaChatResponseSchema = z
   .object({
@@ -40,6 +22,7 @@ const ollamaChatResponseSchema = z
       .object({
         role: z.literal('assistant'),
         content: z.string().min(1).max(100_000),
+        tool_calls: z.never().optional(),
       })
       .passthrough(),
   })
@@ -93,11 +76,20 @@ export async function generateOllamaStructured<T>({
           stream: false,
           format: format.schema,
           options: { temperature: 0 },
+          tools: [],
         }),
         signal: AbortSignal.timeout(OLLAMA_TIMEOUT_MS),
         cache: 'no-store',
       });
-    } catch {
+    } catch (error) {
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'name' in error &&
+        error.name === 'TimeoutError'
+      ) {
+        throw new AIProviderError('TIMEOUT');
+      }
       throw new AIProviderError('UNAVAILABLE');
     }
 

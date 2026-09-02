@@ -47,6 +47,7 @@ describe('generateOllamaStructured', () => {
     });
     const request = JSON.parse(fetchMock.mock.calls[0]?.[1]?.body as string);
     expect(request).toMatchObject({ stream: false, model: 'synthetic-model' });
+    expect(request.tools).toEqual([]);
     expect(request.format).toMatchObject({ type: 'object' });
   });
 
@@ -67,6 +68,35 @@ describe('generateOllamaStructured', () => {
       vi
         .fn()
         .mockResolvedValue(new Response(JSON.stringify(body), { status: 200 })),
+    );
+    await expect(
+      generateOllamaStructured({
+        messages: [{ role: 'user', content: 'Synthetic request' }],
+        schema: outputSchema,
+        schemaName: 'synthetic_output',
+      }),
+    ).rejects.toThrow('Local AI response is invalid');
+  });
+
+  it('rejects arbitrary model tool calls even when structured content is valid', async () => {
+    configure();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            model: 'synthetic-model',
+            message: {
+              role: 'assistant',
+              content: '{"answer":"synthetic"}',
+              tool_calls: [
+                { function: { name: 'finalize_prescription', arguments: {} } },
+              ],
+            },
+          }),
+          { status: 200 },
+        ),
+      ),
     );
     await expect(
       generateOllamaStructured({
@@ -167,5 +197,19 @@ describe('generateOllamaStructured', () => {
         schemaName: 'synthetic_output',
       }),
     ).rejects.toThrow('Local AI service is unavailable');
+  });
+
+  it('categorizes a timeout without exposing transport details', async () => {
+    configure();
+    const timeout = new Error('private transport details');
+    timeout.name = 'TimeoutError';
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(timeout));
+    await expect(
+      generateOllamaStructured({
+        messages: [{ role: 'user', content: 'Synthetic request' }],
+        schema: outputSchema,
+        schemaName: 'synthetic_output',
+      }),
+    ).rejects.toMatchObject({ code: 'TIMEOUT' });
   });
 });

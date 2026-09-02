@@ -6,7 +6,7 @@ export {
   intakeStructuredOutputFormatSchema,
   intakeStructuredOutputSchema,
 } from './structured-output';
-export { orchestrateIntake } from './orchestrator';
+export { createManualIntakeFallback, orchestrateIntake } from './orchestrator';
 export type {
   IntakeConversationMessage,
   IntakeModel,

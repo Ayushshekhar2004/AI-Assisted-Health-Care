@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { generateOllamaStructured } from '@/lib/ai/ollama-chat';
+import { serializeUntrustedAIData } from '../../lib/ai/prompt-security';
 
 import {
   SAFE_CARE_CLASSIFICATION_INSTRUCTIONS,
@@ -20,7 +21,9 @@ export class OllamaSafeCareClassificationModel implements SafeCareClassification
         { role: 'system', content: SAFE_CARE_CLASSIFICATION_INSTRUCTIONS },
         {
           role: 'user',
-          content: JSON.stringify({ structuredIntake: input.structuredIntake }),
+          content: serializeUntrustedAIData('safe_care_context', {
+            structuredIntake: input.structuredIntake,
+          }),
         },
       ],
     });

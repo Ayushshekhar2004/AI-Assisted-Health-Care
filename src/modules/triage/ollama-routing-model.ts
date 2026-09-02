@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { generateOllamaStructured } from '@/lib/ai/ollama-chat';
+import { serializeUntrustedAIData } from '../../lib/ai/prompt-security';
 
 import type { SpecialtyRoutingModel } from './routing';
 import {
@@ -20,7 +21,7 @@ export class OllamaSpecialtyRoutingModel implements SpecialtyRoutingModel {
         { role: 'system', content: ROUTING_ORCHESTRATOR_INSTRUCTIONS },
         {
           role: 'user',
-          content: JSON.stringify({
+          content: serializeUntrustedAIData('routing_context', {
             redFlagDetected: input.redFlagDetected,
             structuredIntake: input.structuredIntake,
           }),

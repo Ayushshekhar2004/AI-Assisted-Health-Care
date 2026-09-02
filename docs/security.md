@@ -61,6 +61,25 @@ Application security logs must use the centralized allow-listed logger, which re
 names and rejects nested or arbitrary values. Do not pass clinical content to the logger and do not
 assume redaction makes patient content safe to collect.
 
+## AI instruction and tool boundaries
+
+Patient and clinician text is data, not authority. Server-side model adapters place it in a marked
+untrusted-data envelope and never interpolate it into system or developer instructions. Shared
+guardrails forbid role changes, identity claims, secret disclosure, prescription finalization,
+server actions, and red-flag overrides. Strict Zod schemas validate every model result; generated
+operational instructions fail closed rather than being displayed or persisted as model-authored
+actions.
+
+Current text AI workflows expose no tools. OpenAI requests explicitly disable tool choice, Ollama
+requests send an empty tool set, and an Ollama response containing a tool call is rejected. Adding a
+tool later requires a narrow Zod input schema plus fresh server-side role and resource authorization;
+model output, client identifiers, and UI state are never authorization evidence.
+
+AI provider errors are normalized before reaching product UI. Patient-facing messages do not name
+deployment topology, model configuration, credentials, internal validation details, or raw provider
+errors. AI telemetry is allow-listed to workflow name, failure category, and duration. It must not
+contain patient/doctor identifiers, intake content, prompts, outputs, or exception messages.
+
 ## Web request protections
 
 - State-changing requests require a same-origin `Origin` header. Next.js Server Actions retain their

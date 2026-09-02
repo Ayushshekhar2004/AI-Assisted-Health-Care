@@ -3,6 +3,8 @@ import 'server-only';
 import OpenAI from 'openai';
 import { zodTextFormat } from 'openai/helpers/zod';
 
+import { serializeUntrustedAIData } from '../../lib/ai/prompt-security';
+
 import type { IntakeModel, IntakeModelInput } from './orchestrator';
 import { getOpenAIIntakeConfig } from './openai-config';
 import {
@@ -21,19 +23,12 @@ export class OpenAIIntakeModel implements IntakeModel {
       input: [
         { role: 'developer', content: INTAKE_ORCHESTRATOR_INSTRUCTIONS },
         {
-          role: 'developer',
-          content: `Previously validated structured intake: ${JSON.stringify(
-            input.previousStructured,
-          )}`,
+          role: 'user',
+          content: serializeUntrustedAIData('intake_context', input),
         },
-        ...input.messages.map((message) => ({
-          role:
-            message.role === 'patient'
-              ? ('user' as const)
-              : ('assistant' as const),
-          content: message.text,
-        })),
       ],
+      tools: [],
+      tool_choice: 'none',
       text: {
         format: zodTextFormat(
           intakeStructuredOutputFormatSchema,

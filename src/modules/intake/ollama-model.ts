@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { generateOllamaStructured } from '@/lib/ai/ollama-chat';
+import { serializeUntrustedAIData } from '../../lib/ai/prompt-security';
 
 import type { IntakeModel, IntakeModelInput } from './orchestrator';
 import {
@@ -18,16 +19,9 @@ export class OllamaIntakeModel implements IntakeModel {
       messages: [
         { role: 'system', content: INTAKE_ORCHESTRATOR_INSTRUCTIONS },
         {
-          role: 'system',
-          content: `Previously validated structured intake: ${JSON.stringify(input.previousStructured)}`,
+          role: 'user',
+          content: serializeUntrustedAIData('intake_context', input),
         },
-        ...input.messages.map((message) => ({
-          role:
-            message.role === 'patient'
-              ? ('user' as const)
-              : ('assistant' as const),
-          content: message.text,
-        })),
       ],
     });
     return result.output;

@@ -3,6 +3,8 @@ import 'server-only';
 import OpenAI from 'openai';
 import { zodTextFormat } from 'openai/helpers/zod';
 
+import { serializeUntrustedAIData } from '../../lib/ai/prompt-security';
+
 import { getOpenAIRoutingConfig } from './openai-routing-config';
 import {
   SAFE_CARE_CLASSIFICATION_INSTRUCTIONS,
@@ -24,9 +26,13 @@ export class OpenAISafeCareClassificationModel implements SafeCareClassification
         { role: 'developer', content: SAFE_CARE_CLASSIFICATION_INSTRUCTIONS },
         {
           role: 'user',
-          content: JSON.stringify({ structuredIntake: input.structuredIntake }),
+          content: serializeUntrustedAIData('safe_care_context', {
+            structuredIntake: input.structuredIntake,
+          }),
         },
       ],
+      tools: [],
+      tool_choice: 'none',
       text: {
         format: zodTextFormat(
           safeCareClassificationSchema,

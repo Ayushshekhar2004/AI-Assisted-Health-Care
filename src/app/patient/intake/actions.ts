@@ -6,7 +6,6 @@ import { redirect } from 'next/navigation';
 import { addIntakeMessage, startIntakeSession } from '@/modules/intake/server';
 import { EMERGENCY_SCREENING_QUESTIONS } from '@/modules/triage';
 import { evaluateEmergencyScreening } from '@/modules/triage/server';
-import { isAIProviderError } from '@/lib/ai/ollama-chat';
 
 export type IntakeActionState = Readonly<{
   message: string;
@@ -30,17 +29,19 @@ export async function sendIntakeMessageAction(
   formData: FormData,
 ): Promise<IntakeActionState> {
   try {
-    await addIntakeMessage(formData.get('sessionId'), formData.get('message'));
-  } catch (error) {
-    if (isAIProviderError(error)) {
+    const mode = await addIntakeMessage(
+      formData.get('sessionId'),
+      formData.get('message'),
+    );
+    revalidatePath('/patient/intake');
+    if (mode === 'MANUAL_FALLBACK') {
       return {
         message:
-          error.code === 'UNAVAILABLE'
-            ? 'The local AI service is unavailable. Check Ollama and try again.'
-            : 'The local AI response did not pass safety validation after retrying. Please try again.',
-        status: 'error',
+          'Your response was saved for manual clinician review. AI assistance is unavailable, so routing will use General Medicine.',
+        status: 'success',
       };
     }
+  } catch {
     return { message: genericIntakeError, status: 'error' };
   }
 

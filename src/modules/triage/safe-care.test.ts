@@ -101,7 +101,7 @@ describe('safe care while waiting', () => {
     expect(result.allowed_interim_actions).toEqual([]);
   });
 
-  it('rejects malformed AI classification', async () => {
+  it('suppresses guidance for malformed AI classification', async () => {
     await expect(
       createSafeCareGuidance(
         model({ symptom_category: 'MILD_HEADACHE', dosage: 'forbidden' }),
@@ -112,7 +112,27 @@ describe('safe care while waiting', () => {
           redFlagDetected: false,
         },
       ),
-    ).rejects.toThrow();
+    ).resolves.toMatchObject({
+      disposition: 'UNSUPPORTED',
+      allowed_interim_actions: [],
+    });
+  });
+
+  it('suppresses guidance when the provider is unavailable', async () => {
+    await expect(
+      createSafeCareGuidance(
+        { generate: vi.fn().mockRejectedValue(new Error('provider outage')) },
+        {
+          structuredIntake: intake,
+          language: 'en',
+          ageYears: 30,
+          redFlagDetected: false,
+        },
+      ),
+    ).resolves.toMatchObject({
+      disposition: 'UNSUPPORTED',
+      allowed_interim_actions: [],
+    });
   });
 
   it('renders the centralized library in Hindi and English', async () => {

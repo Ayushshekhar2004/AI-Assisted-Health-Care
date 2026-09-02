@@ -1,5 +1,10 @@
 import { z } from 'zod';
 
+import {
+  safeAIGeneratedTextSchema,
+  withAISecurityInstructions,
+} from '../../lib/ai/prompt-security';
+
 const conciseText = z.string().min(1).max(500);
 const conciseList = z.array(conciseText).max(20);
 
@@ -53,6 +58,18 @@ export const intakeStructuredOutputFormatSchema = z
 
 export const intakeStructuredOutputSchema =
   intakeStructuredOutputFormatSchema.superRefine((value, context) => {
+    if (value.follow_up_question) {
+      const safety = safeAIGeneratedTextSchema.safeParse(
+        value.follow_up_question,
+      );
+      if (!safety.success) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Follow-up contains a forbidden operational instruction',
+          path: ['follow_up_question'],
+        });
+      }
+    }
     if (value.intake_complete) {
       if (value.follow_up_question !== null) {
         context.addIssue({
@@ -100,7 +117,8 @@ export type IntakeStructuredOutput = z.infer<
 
 export const INTAKE_STRUCTURED_SCHEMA_VERSION = 'intake-v1';
 
-export const INTAKE_ORCHESTRATOR_INSTRUCTIONS = `
+export const INTAKE_ORCHESTRATOR_INSTRUCTIONS = withAISecurityInstructions(
+  `
 You are a healthcare intake assistant that collects patient-provided information for later review.
 
 Rules:
@@ -119,4 +137,5 @@ Rules:
 - This assistant is not emergency care. Never reassure a patient that urgent care is unnecessary.
 
 Return only the structured output required by the schema.
-`.trim();
+`.trim(),
+);

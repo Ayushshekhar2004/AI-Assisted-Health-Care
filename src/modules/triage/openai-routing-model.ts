@@ -3,6 +3,8 @@ import 'server-only';
 import OpenAI from 'openai';
 import { zodTextFormat } from 'openai/helpers/zod';
 
+import { serializeUntrustedAIData } from '../../lib/ai/prompt-security';
+
 import { getOpenAIRoutingConfig } from './openai-routing-config';
 import type { SpecialtyRoutingModel } from './routing';
 import {
@@ -23,12 +25,14 @@ export class OpenAISpecialtyRoutingModel implements SpecialtyRoutingModel {
         { role: 'developer', content: ROUTING_ORCHESTRATOR_INSTRUCTIONS },
         {
           role: 'user',
-          content: JSON.stringify({
+          content: serializeUntrustedAIData('routing_context', {
             redFlagDetected: input.redFlagDetected,
             structuredIntake: input.structuredIntake,
           }),
         },
       ],
+      tools: [],
+      tool_choice: 'none',
       text: {
         format: zodTextFormat(
           routingOutputFormatSchema,

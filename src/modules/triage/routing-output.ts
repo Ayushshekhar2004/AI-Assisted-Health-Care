@@ -1,6 +1,11 @@
 import { z } from 'zod';
 
 import {
+  safeAIGeneratedTextSchema,
+  withAISecurityInstructions,
+} from '../../lib/ai/prompt-security';
+
+import {
   DEFAULT_PILOT_SPECIALTY,
   PILOT_SPECIALTY_CODES,
   pilotSpecialtySchema,
@@ -30,6 +35,16 @@ export const routingOutputFormatSchema = z
 
 export const routingOutputSchema = routingOutputFormatSchema.superRefine(
   (output, context) => {
+    if (
+      !safeAIGeneratedTextSchema.safeParse(output.rationale_for_doctor).success
+    ) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          'Doctor rationale contains a forbidden operational instruction',
+        path: ['rationale_for_doctor'],
+      });
+    }
     if (output.rationale_for_doctor.trim().length === 0) {
       context.addIssue({
         code: z.ZodIssueCode.custom,
@@ -61,7 +76,8 @@ export type RoutingUrgency = z.infer<typeof routingUrgencySchema>;
 export const ROUTING_SCHEMA_VERSION = 'specialty-routing-v1';
 export const ROUTING_PROMPT_VERSION = 'specialty-routing-prompt-v1';
 
-export const ROUTING_ORCHESTRATOR_INSTRUCTIONS = `
+export const ROUTING_ORCHESTRATOR_INSTRUCTIONS = withAISecurityInstructions(
+  `
 You are an assistive specialty-routing system for clinician review. Route only to this controlled
 pilot taxonomy: ${PILOT_SPECIALTY_CODES.join(', ')}.
 
@@ -82,4 +98,5 @@ Rules:
 - List only controlled intake fields that are still missing and materially affect routing.
 
 Return only the structured output required by the schema.
-`.trim();
+`.trim(),
+);

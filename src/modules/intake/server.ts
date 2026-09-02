@@ -3,9 +3,11 @@ import { createClient as createSupabaseAdminClient } from '@supabase/supabase-js
 
 import { getSupabaseAdminConfig } from '@/lib/supabase/admin-config';
 import { createClient } from '@/lib/supabase/server';
+import { isAIFailure, runAIWorkflow } from '@/lib/ai/failure';
 
 import {
   INTAKE_STRUCTURED_SCHEMA_VERSION,
+  createManualIntakeFallback,
   intakeStructuredOutputSchema,
   orchestrateIntake,
   parseIntakeMessage,
@@ -29,6 +31,7 @@ const intakeMessageSchema = z.object({
 export type IntakeSession = z.infer<typeof intakeSessionSchema>;
 export type IntakeMessage = z.infer<typeof intakeMessageSchema>;
 export type { IntakeStructuredOutput } from './index';
+export type IntakeUpdateMode = 'AI' | 'MANUAL_FALLBACK';
 
 async function createAuthorizedPatientClient() {
   const supabase = await createClient();
@@ -119,7 +122,7 @@ export async function startIntakeSession(): Promise<void> {
 export async function addIntakeMessage(
   sessionIdInput: unknown,
   textInput: unknown,
-): Promise<void> {
+): Promise<IntakeUpdateMode> {
   const sessionId = parseIntakeSessionId(sessionIdInput);
   const text = parseIntakeMessage(textInput);
   const { supabase, userId } = await createAuthorizedPatientClient();
@@ -169,10 +172,20 @@ export async function addIntakeMessage(
   const previousStructured = structuredResult.data
     ? intakeStructuredOutputSchema.parse(structuredResult.data.structured_data)
     : null;
-  const turn = await orchestrateIntake(createIntakeModel(), {
-    messages,
-    previousStructured,
-  });
+  let turn;
+  let mode: IntakeUpdateMode = 'AI';
+  try {
+    turn = await runAIWorkflow('intake', () =>
+      orchestrateIntake(createIntakeModel(), {
+        messages,
+        previousStructured,
+      }),
+    );
+  } catch (error) {
+    if (!isAIFailure(error)) throw error;
+    turn = createManualIntakeFallback(previousStructured);
+    mode = 'MANUAL_FALLBACK';
+  }
 
   const privileged = createPrivilegedClient();
   const { error: recordError } = await privileged.rpc(
@@ -187,4 +200,5 @@ export async function addIntakeMessage(
     },
   );
   if (recordError) throw new Error('Intake is unavailable');
+  return mode;
 }

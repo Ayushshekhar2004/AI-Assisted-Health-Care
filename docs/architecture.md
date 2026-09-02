@@ -66,6 +66,21 @@ Server-side text AI workflows depend on a provider abstraction. OpenAI is the de
 Ollama is an optional loopback or explicit RFC1918 private-LAN development provider.
 Provider-specific transport code must return the same Zod-validated domain outputs and must never be
 imported into browser components. Public Ollama hosts and production Ollama configuration are denied.
+All patient, clinician, transcript, and structured-record content is serialized in a marked
+untrusted-data envelope beneath an immutable shared security instruction. Text models receive no
+application tools: OpenAI tool choice is disabled and Ollama tool requests/responses are denied.
+Models can propose only strict domain output; they cannot select an actor, authorize a resource,
+invoke a server action, finalize a clinical artifact, or alter deterministic red-flag state. Any
+future AI tool must have a dedicated strict Zod input schema and repeat role plus resource
+authorization on the server immediately before execution.
+
+AI failure handling is deterministic and content-free. Timeout, provider outage, and invalid output
+are normalized into categorical failures. Intake preserves the patient's submitted text, closes the
+AI turn with missing fields retained for manual clinician review, and permits deterministic General
+Medicine routing. Routing failures and low confidence select General Medicine; a retained red flag
+still forces emergency urgency. Safe-care classification failure suppresses ordinary guidance.
+Telemetry contains only workflow category, categorical outcome, and duration—never prompts, model
+responses, clinical fields, actor identifiers, or provider error text.
 
 Safe Care While You Wait belongs to the `triage` module. Its model provider may classify a completed
 intake into one controlled symptom category, but it cannot author patient guidance. Patient-facing
