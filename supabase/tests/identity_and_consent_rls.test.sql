@@ -550,6 +550,8 @@ select results_eq(
   $$
     select actor_user_id, action, target_type, target_id, outcome, created_at is not null
     from public.audit_events
+    where action = 'doctor_verification_approved'
+      and target_id = '50000000-0000-0000-0000-000000000003'
   $$,
   $$
     values (

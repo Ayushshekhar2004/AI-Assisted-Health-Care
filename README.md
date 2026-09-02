@@ -54,6 +54,24 @@ npm install
 npm run dev
 ```
 
+### Synthetic local demo data
+
+With the local Supabase stack running, create a clean synthetic demo dataset with three verified
+doctors, controlled specialties, future availability, and requested/confirmed appointments:
+
+```bash
+DEMO_SEED_CONFIRM=LOCAL_DEMO_ONLY npm run seed:demo
+```
+
+The runner fails closed unless that exact confirmation is supplied, both discovered Supabase URLs
+are loopback-only, and exactly one local Supabase database container is running. It never accepts a
+hosted Supabase target. The fixture uses only reserved `example.invalid` identities and synthetic
+labels. Running it again replaces only its fixed demo records; it does not reset the database.
+
+The fixture accounts intentionally have no usable password. Create/login with a normal local
+development account when testing authentication; the seeded records support search, scheduling,
+dashboard, and appointment-state demonstrations without committing credentials.
+
 ### Local Ollama text AI
 
 OpenAI remains the default provider. For local development, the intake, specialty-routing, and

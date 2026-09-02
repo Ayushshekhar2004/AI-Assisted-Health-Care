@@ -7,6 +7,8 @@
     "build": "next build",
     "audit:dependencies": "npm audit --audit-level=high",
     "eval:offline": "vitest run src/modules/evaluation/offline-evaluation.test.ts",
+    "seed:demo": "node scripts/seed-demo.mjs",
+    "test:e2e": "supabase test db supabase/tests/care_journey_e2e.test.sql && vitest run src/app/api/consultation/video-token/route.test.ts",
     "start": "next start",
     "lint": "eslint . --max-warnings=0",
     "format": "prettier --write .",
