@@ -82,6 +82,16 @@ still forces emergency urgency. Safe-care classification failure suppresses ordi
 Telemetry contains only workflow category, categorical outcome, and duration—never prompts, model
 responses, clinical fields, actor identifiers, or provider error text.
 
+Offline AI evaluation belongs to the `evaluation` module. Versioned JSON fixtures contain only
+synthetic scenarios and are rejected when direct identifiers or identity fields are detected. The
+harness makes no provider or database calls: it feeds fixed candidate outputs through the real
+deterministic red-flag and routing policies, then reports only categorical results and failed field
+names. See `docs/ai-evaluation.md`.
+
+Evaluation reports bind results to explicit model, prompt, routing-policy, rule-set, dataset, and
+runner versions. Red-flag false negatives are a release-blocking error category rather than a
+score that can be averaged away by successful routine cases.
+
 Safe Care While You Wait belongs to the `triage` module. Its model provider may classify a completed
 intake into one controlled symptom category, but it cannot author patient guidance. Patient-facing
 steps, prohibitions, warning signs, escalation text, and disclaimers come only from the centralized,

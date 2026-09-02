@@ -1,6 +1,7 @@
 export { parseIntakeMessage, parseIntakeSessionId } from './validation';
 export {
   INTAKE_ORCHESTRATOR_INSTRUCTIONS,
+  INTAKE_PROMPT_VERSION,
   INTAKE_STRUCTURED_SCHEMA_VERSION,
   intakeFieldSchema,
   intakeStructuredOutputFormatSchema,

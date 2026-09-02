@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "audit:dependencies": "npm audit --audit-level=high",
+    "eval:offline": "vitest run src/modules/evaluation/offline-evaluation.test.ts",
     "start": "next start",
     "lint": "eslint . --max-warnings=0",
     "format": "prettier --write .",

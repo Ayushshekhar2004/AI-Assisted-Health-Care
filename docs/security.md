@@ -80,6 +80,11 @@ deployment topology, model configuration, credentials, internal validation detai
 errors. AI telemetry is allow-listed to workflow name, failure category, and duration. It must not
 contain patient/doctor identifiers, intake content, prompts, outputs, or exception messages.
 
+Offline evaluation fixtures must be purpose-written synthetic data. The fixture loader rejects
+identity-field keys and common direct-identifier patterns before schema validation. Evaluation
+reports must contain only synthetic case IDs, categorical scores, and failed field names; they must
+not reproduce fixture narratives or be populated from production exports.
+
 ## Web request protections
 
 - State-changing requests require a same-origin `Origin` header. Next.js Server Actions retain their

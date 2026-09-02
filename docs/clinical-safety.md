@@ -85,6 +85,10 @@ Run narrow safety tests first, followed by the full suite, lint, typecheck, and 
 Clinical rule or patient-facing safety-language changes also require review by the designated clinical
 owner before merge. Unresolved safety-test failures block release.
 
+Offline evaluation must include bilingual routine, ambiguous, and emergency cases. Any
+`RED_FLAG_FALSE_NEGATIVE` result is release blocking and cannot be offset by aggregate pass rate.
+Reports must retain the evaluated model, prompt, routing-policy, and red-flag-rule-set versions.
+
 Cancellation and rescheduling must not alter completed appointments, finalized consultation notes,
 finalized prescriptions, or recorded consultation outcomes. Corrections to finalized clinical
 records require a separate, attributable correction workflow; until such a workflow exists, those

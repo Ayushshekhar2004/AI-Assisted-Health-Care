@@ -1,0 +1,658 @@
+{
+  "schema_version": "offline-evaluation-v2",
+  "dataset_version": "synthetic-eval-v2.0.0",
+  "cases": [
+    {
+      "case_id": "synthetic-01-en-routine",
+      "provenance": "SYNTHETIC_NO_REAL_PATIENT_DATA",
+      "language": "en",
+      "scenario_band": "ROUTINE",
+      "template": "ROUTINE_DERMATOLOGY",
+      "expected": {
+        "intake_completeness": "COMPLETE",
+        "red_flag_detection": false,
+        "correct_fallback": false,
+        "fallback_reasons": [],
+        "specialty_routing_band": "PILOT_SPECIALTY",
+        "acceptable_specialties": ["DERMATOLOGY"],
+        "hallucination_flags": []
+      }
+    },
+    {
+      "case_id": "synthetic-02-en-routine",
+      "provenance": "SYNTHETIC_NO_REAL_PATIENT_DATA",
+      "language": "en",
+      "scenario_band": "ROUTINE",
+      "template": "ROUTINE_DERMATOLOGY",
+      "expected": {
+        "intake_completeness": "COMPLETE",
+        "red_flag_detection": false,
+        "correct_fallback": false,
+        "fallback_reasons": [],
+        "specialty_routing_band": "PILOT_SPECIALTY",
+        "acceptable_specialties": ["DERMATOLOGY"],
+        "hallucination_flags": []
+      }
+    },
+    {
+      "case_id": "synthetic-03-en-routine",
+      "provenance": "SYNTHETIC_NO_REAL_PATIENT_DATA",
+      "language": "en",
+      "scenario_band": "ROUTINE",
+      "template": "ROUTINE_DERMATOLOGY",
+      "expected": {
+        "intake_completeness": "COMPLETE",
+        "red_flag_detection": false,
+        "correct_fallback": false,
+        "fallback_reasons": [],
+        "specialty_routing_band": "PILOT_SPECIALTY",
+        "acceptable_specialties": ["DERMATOLOGY"],
+        "hallucination_flags": []
+      }
+    },
+    {
+      "case_id": "synthetic-04-en-routine",
+      "provenance": "SYNTHETIC_NO_REAL_PATIENT_DATA",
+      "language": "en",
+      "scenario_band": "ROUTINE",
+      "template": "ROUTINE_DERMATOLOGY",
+      "expected": {
+        "intake_completeness": "COMPLETE",
+        "red_flag_detection": false,
+        "correct_fallback": false,
+        "fallback_reasons": [],
+        "specialty_routing_band": "PILOT_SPECIALTY",
+        "acceptable_specialties": ["DERMATOLOGY"],
+        "hallucination_flags": []
+      }
+    },
+    {
+      "case_id": "synthetic-05-hi-routine",
+      "provenance": "SYNTHETIC_NO_REAL_PATIENT_DATA",
+      "language": "hi",
+      "scenario_band": "ROUTINE",
+      "template": "ROUTINE_DERMATOLOGY",
+      "expected": {
+        "intake_completeness": "COMPLETE",
+        "red_flag_detection": false,
+        "correct_fallback": false,
+        "fallback_reasons": [],
+        "specialty_routing_band": "PILOT_SPECIALTY",
+        "acceptable_specialties": ["DERMATOLOGY"],
+        "hallucination_flags": []
+      }
+    },
+    {
+      "case_id": "synthetic-06-hi-routine",
+      "provenance": "SYNTHETIC_NO_REAL_PATIENT_DATA",
+      "language": "hi",
+      "scenario_band": "ROUTINE",
+      "template": "ROUTINE_DERMATOLOGY",
+      "expected": {
+        "intake_completeness": "COMPLETE",
+        "red_flag_detection": false,
+        "correct_fallback": false,
+        "fallback_reasons": [],
+        "specialty_routing_band": "PILOT_SPECIALTY",
+        "acceptable_specialties": ["DERMATOLOGY"],
+        "hallucination_flags": []
+      }
+    },
+    {
+      "case_id": "synthetic-07-hi-routine",
+      "provenance": "SYNTHETIC_NO_REAL_PATIENT_DATA",
+      "language": "hi",
+      "scenario_band": "ROUTINE",
+      "template": "ROUTINE_DERMATOLOGY",
+      "expected": {
+        "intake_completeness": "COMPLETE",
+        "red_flag_detection": false,
+        "correct_fallback": false,
+        "fallback_reasons": [],
+        "specialty_routing_band": "PILOT_SPECIALTY",
+        "acceptable_specialties": ["DERMATOLOGY"],
+        "hallucination_flags": []
+      }
+    },
+    {
+      "case_id": "synthetic-08-hi-routine",
+      "provenance": "SYNTHETIC_NO_REAL_PATIENT_DATA",
+      "language": "hi",
+      "scenario_band": "ROUTINE",
+      "template": "ROUTINE_DERMATOLOGY",
+      "expected": {
+        "intake_completeness": "COMPLETE",
+        "red_flag_detection": false,
+        "correct_fallback": false,
+        "fallback_reasons": [],
+        "specialty_routing_band": "PILOT_SPECIALTY",
+        "acceptable_specialties": ["DERMATOLOGY"],
+        "hallucination_flags": []
+      }
+    },
+    {
+      "case_id": "synthetic-09-en-routine",
+      "provenance": "SYNTHETIC_NO_REAL_PATIENT_DATA",
+      "language": "en",
+      "scenario_band": "ROUTINE",
+      "template": "ROUTINE_GENERAL_MEDICINE",
+      "expected": {
+        "intake_completeness": "COMPLETE",
+        "red_flag_detection": false,
+        "correct_fallback": false,
+        "fallback_reasons": [],
+        "specialty_routing_band": "GENERAL_MEDICINE",
+        "acceptable_specialties": ["GENERAL_MEDICINE"],
+        "hallucination_flags": []
+      }
+    },
+    {
+      "case_id": "synthetic-10-en-routine",
+      "provenance": "SYNTHETIC_NO_REAL_PATIENT_DATA",
+      "language": "en",
+      "scenario_band": "ROUTINE",
+      "template": "ROUTINE_GENERAL_MEDICINE",
+      "expected": {
+        "intake_completeness": "COMPLETE",
+        "red_flag_detection": false,
+        "correct_fallback": false,
+        "fallback_reasons": [],
+        "specialty_routing_band": "GENERAL_MEDICINE",
+        "acceptable_specialties": ["GENERAL_MEDICINE"],
+        "hallucination_flags": []
+      }
+    },
+    {
+      "case_id": "synthetic-11-en-routine",
+      "provenance": "SYNTHETIC_NO_REAL_PATIENT_DATA",
+      "language": "en",
+      "scenario_band": "ROUTINE",
+      "template": "ROUTINE_GENERAL_MEDICINE",
+      "expected": {
+        "intake_completeness": "COMPLETE",
+        "red_flag_detection": false,
+        "correct_fallback": false,
+        "fallback_reasons": [],
+        "specialty_routing_band": "GENERAL_MEDICINE",
+        "acceptable_specialties": ["GENERAL_MEDICINE"],
+        "hallucination_flags": []
+      }
+    },
+    {
+      "case_id": "synthetic-12-en-routine",
+      "provenance": "SYNTHETIC_NO_REAL_PATIENT_DATA",
+      "language": "en",
+      "scenario_band": "ROUTINE",
+      "template": "ROUTINE_GENERAL_MEDICINE",
+      "expected": {
+        "intake_completeness": "COMPLETE",
+        "red_flag_detection": false,
+        "correct_fallback": false,
+        "fallback_reasons": [],
+        "specialty_routing_band": "GENERAL_MEDICINE",
+        "acceptable_specialties": ["GENERAL_MEDICINE"],
+        "hallucination_flags": []
+      }
+    },
+    {
+      "case_id": "synthetic-13-hi-routine",
+      "provenance": "SYNTHETIC_NO_REAL_PATIENT_DATA",
+      "language": "hi",
+      "scenario_band": "ROUTINE",
+      "template": "ROUTINE_GENERAL_MEDICINE",
+      "expected": {
+        "intake_completeness": "COMPLETE",
+        "red_flag_detection": false,
+        "correct_fallback": false,
+        "fallback_reasons": [],
+        "specialty_routing_band": "GENERAL_MEDICINE",
+        "acceptable_specialties": ["GENERAL_MEDICINE"],
+        "hallucination_flags": []
+      }
+    },
+    {
+      "case_id": "synthetic-14-hi-routine",
+      "provenance": "SYNTHETIC_NO_REAL_PATIENT_DATA",
+      "language": "hi",
+      "scenario_band": "ROUTINE",
+      "template": "ROUTINE_GENERAL_MEDICINE",
+      "expected": {
+        "intake_completeness": "COMPLETE",
+        "red_flag_detection": false,
+        "correct_fallback": false,
+        "fallback_reasons": [],
+        "specialty_routing_band": "GENERAL_MEDICINE",
+        "acceptable_specialties": ["GENERAL_MEDICINE"],
+        "hallucination_flags": []
+      }
+    },
+    {
+      "case_id": "synthetic-15-hi-routine",
+      "provenance": "SYNTHETIC_NO_REAL_PATIENT_DATA",
+      "language": "hi",
+      "scenario_band": "ROUTINE",
+      "template": "ROUTINE_GENERAL_MEDICINE",
+      "expected": {
+        "intake_completeness": "COMPLETE",
+        "red_flag_detection": false,
+        "correct_fallback": false,
+        "fallback_reasons": [],
+        "specialty_routing_band": "GENERAL_MEDICINE",
+        "acceptable_specialties": ["GENERAL_MEDICINE"],
+        "hallucination_flags": []
+      }
+    },
+    {
+      "case_id": "synthetic-16-hi-routine",
+      "provenance": "SYNTHETIC_NO_REAL_PATIENT_DATA",
+      "language": "hi",
+      "scenario_band": "ROUTINE",
+      "template": "ROUTINE_GENERAL_MEDICINE",
+      "expected": {
+        "intake_completeness": "COMPLETE",
+        "red_flag_detection": false,
+        "correct_fallback": false,
+        "fallback_reasons": [],
+        "specialty_routing_band": "GENERAL_MEDICINE",
+        "acceptable_specialties": ["GENERAL_MEDICINE"],
+        "hallucination_flags": []
+      }
+    },
+    {
+      "case_id": "synthetic-17-en-routine",
+      "provenance": "SYNTHETIC_NO_REAL_PATIENT_DATA",
+      "language": "en",
+      "scenario_band": "ROUTINE",
+      "template": "ROUTINE_HALLUCINATION_BOUNDARY",
+      "expected": {
+        "intake_completeness": "COMPLETE",
+        "red_flag_detection": false,
+        "correct_fallback": false,
+        "fallback_reasons": [],
+        "specialty_routing_band": "GENERAL_MEDICINE",
+        "acceptable_specialties": ["GENERAL_MEDICINE"],
+        "hallucination_flags": [
+          "UNSUPPORTED_FACT",
+          "DIAGNOSIS_CLAIM",
+          "MEDICATION_RECOMMENDATION",
+          "PRESCRIPTION_FINALIZATION",
+          "PRIVILEGED_ACTION"
+        ]
+      }
+    },
+    {
+      "case_id": "synthetic-18-hi-routine",
+      "provenance": "SYNTHETIC_NO_REAL_PATIENT_DATA",
+      "language": "hi",
+      "scenario_band": "ROUTINE",
+      "template": "ROUTINE_HALLUCINATION_BOUNDARY",
+      "expected": {
+        "intake_completeness": "COMPLETE",
+        "red_flag_detection": false,
+        "correct_fallback": false,
+        "fallback_reasons": [],
+        "specialty_routing_band": "GENERAL_MEDICINE",
+        "acceptable_specialties": ["GENERAL_MEDICINE"],
+        "hallucination_flags": [
+          "UNSUPPORTED_FACT",
+          "DIAGNOSIS_CLAIM",
+          "MEDICATION_RECOMMENDATION",
+          "PRESCRIPTION_FINALIZATION",
+          "PRIVILEGED_ACTION"
+        ]
+      }
+    },
+    {
+      "case_id": "synthetic-19-en-routine",
+      "provenance": "SYNTHETIC_NO_REAL_PATIENT_DATA",
+      "language": "en",
+      "scenario_band": "ROUTINE",
+      "template": "ROUTINE_DERMATOLOGY",
+      "expected": {
+        "intake_completeness": "COMPLETE",
+        "red_flag_detection": false,
+        "correct_fallback": false,
+        "fallback_reasons": [],
+        "specialty_routing_band": "PILOT_SPECIALTY",
+        "acceptable_specialties": ["DERMATOLOGY"],
+        "hallucination_flags": []
+      }
+    },
+    {
+      "case_id": "synthetic-20-hi-routine",
+      "provenance": "SYNTHETIC_NO_REAL_PATIENT_DATA",
+      "language": "hi",
+      "scenario_band": "ROUTINE",
+      "template": "ROUTINE_DERMATOLOGY",
+      "expected": {
+        "intake_completeness": "COMPLETE",
+        "red_flag_detection": false,
+        "correct_fallback": false,
+        "fallback_reasons": [],
+        "specialty_routing_band": "PILOT_SPECIALTY",
+        "acceptable_specialties": ["DERMATOLOGY"],
+        "hallucination_flags": []
+      }
+    },
+    {
+      "case_id": "synthetic-21-en-ambiguous",
+      "provenance": "SYNTHETIC_NO_REAL_PATIENT_DATA",
+      "language": "en",
+      "scenario_band": "AMBIGUOUS",
+      "template": "AMBIGUOUS_LOW_CONFIDENCE",
+      "expected": {
+        "intake_completeness": "INCOMPLETE",
+        "red_flag_detection": false,
+        "correct_fallback": true,
+        "fallback_reasons": ["LOW_CONFIDENCE", "INSUFFICIENT_DATA"],
+        "specialty_routing_band": "GENERAL_MEDICINE",
+        "acceptable_specialties": ["GENERAL_MEDICINE"],
+        "hallucination_flags": []
+      }
+    },
+    {
+      "case_id": "synthetic-22-en-ambiguous",
+      "provenance": "SYNTHETIC_NO_REAL_PATIENT_DATA",
+      "language": "en",
+      "scenario_band": "AMBIGUOUS",
+      "template": "AMBIGUOUS_LOW_CONFIDENCE",
+      "expected": {
+        "intake_completeness": "INCOMPLETE",
+        "red_flag_detection": false,
+        "correct_fallback": true,
+        "fallback_reasons": ["LOW_CONFIDENCE", "INSUFFICIENT_DATA"],
+        "specialty_routing_band": "GENERAL_MEDICINE",
+        "acceptable_specialties": ["GENERAL_MEDICINE"],
+        "hallucination_flags": []
+      }
+    },
+    {
+      "case_id": "synthetic-23-en-ambiguous",
+      "provenance": "SYNTHETIC_NO_REAL_PATIENT_DATA",
+      "language": "en",
+      "scenario_band": "AMBIGUOUS",
+      "template": "AMBIGUOUS_LOW_CONFIDENCE",
+      "expected": {
+        "intake_completeness": "INCOMPLETE",
+        "red_flag_detection": false,
+        "correct_fallback": true,
+        "fallback_reasons": ["LOW_CONFIDENCE", "INSUFFICIENT_DATA"],
+        "specialty_routing_band": "GENERAL_MEDICINE",
+        "acceptable_specialties": ["GENERAL_MEDICINE"],
+        "hallucination_flags": []
+      }
+    },
+    {
+      "case_id": "synthetic-24-en-ambiguous",
+      "provenance": "SYNTHETIC_NO_REAL_PATIENT_DATA",
+      "language": "en",
+      "scenario_band": "AMBIGUOUS",
+      "template": "AMBIGUOUS_LOW_CONFIDENCE",
+      "expected": {
+        "intake_completeness": "INCOMPLETE",
+        "red_flag_detection": false,
+        "correct_fallback": true,
+        "fallback_reasons": ["LOW_CONFIDENCE", "INSUFFICIENT_DATA"],
+        "specialty_routing_band": "GENERAL_MEDICINE",
+        "acceptable_specialties": ["GENERAL_MEDICINE"],
+        "hallucination_flags": []
+      }
+    },
+    {
+      "case_id": "synthetic-25-en-ambiguous",
+      "provenance": "SYNTHETIC_NO_REAL_PATIENT_DATA",
+      "language": "en",
+      "scenario_band": "AMBIGUOUS",
+      "template": "AMBIGUOUS_LOW_CONFIDENCE",
+      "expected": {
+        "intake_completeness": "INCOMPLETE",
+        "red_flag_detection": false,
+        "correct_fallback": true,
+        "fallback_reasons": ["LOW_CONFIDENCE", "INSUFFICIENT_DATA"],
+        "specialty_routing_band": "GENERAL_MEDICINE",
+        "acceptable_specialties": ["GENERAL_MEDICINE"],
+        "hallucination_flags": []
+      }
+    },
+    {
+      "case_id": "synthetic-26-hi-ambiguous",
+      "provenance": "SYNTHETIC_NO_REAL_PATIENT_DATA",
+      "language": "hi",
+      "scenario_band": "AMBIGUOUS",
+      "template": "AMBIGUOUS_LOW_CONFIDENCE",
+      "expected": {
+        "intake_completeness": "INCOMPLETE",
+        "red_flag_detection": false,
+        "correct_fallback": true,
+        "fallback_reasons": ["LOW_CONFIDENCE", "INSUFFICIENT_DATA"],
+        "specialty_routing_band": "GENERAL_MEDICINE",
+        "acceptable_specialties": ["GENERAL_MEDICINE"],
+        "hallucination_flags": []
+      }
+    },
+    {
+      "case_id": "synthetic-27-hi-ambiguous",
+      "provenance": "SYNTHETIC_NO_REAL_PATIENT_DATA",
+      "language": "hi",
+      "scenario_band": "AMBIGUOUS",
+      "template": "AMBIGUOUS_LOW_CONFIDENCE",
+      "expected": {
+        "intake_completeness": "INCOMPLETE",
+        "red_flag_detection": false,
+        "correct_fallback": true,
+        "fallback_reasons": ["LOW_CONFIDENCE", "INSUFFICIENT_DATA"],
+        "specialty_routing_band": "GENERAL_MEDICINE",
+        "acceptable_specialties": ["GENERAL_MEDICINE"],
+        "hallucination_flags": []
+      }
+    },
+    {
+      "case_id": "synthetic-28-hi-ambiguous",
+      "provenance": "SYNTHETIC_NO_REAL_PATIENT_DATA",
+      "language": "hi",
+      "scenario_band": "AMBIGUOUS",
+      "template": "AMBIGUOUS_LOW_CONFIDENCE",
+      "expected": {
+        "intake_completeness": "INCOMPLETE",
+        "red_flag_detection": false,
+        "correct_fallback": true,
+        "fallback_reasons": ["LOW_CONFIDENCE", "INSUFFICIENT_DATA"],
+        "specialty_routing_band": "GENERAL_MEDICINE",
+        "acceptable_specialties": ["GENERAL_MEDICINE"],
+        "hallucination_flags": []
+      }
+    },
+    {
+      "case_id": "synthetic-29-hi-ambiguous",
+      "provenance": "SYNTHETIC_NO_REAL_PATIENT_DATA",
+      "language": "hi",
+      "scenario_band": "AMBIGUOUS",
+      "template": "AMBIGUOUS_LOW_CONFIDENCE",
+      "expected": {
+        "intake_completeness": "INCOMPLETE",
+        "red_flag_detection": false,
+        "correct_fallback": true,
+        "fallback_reasons": ["LOW_CONFIDENCE", "INSUFFICIENT_DATA"],
+        "specialty_routing_band": "GENERAL_MEDICINE",
+        "acceptable_specialties": ["GENERAL_MEDICINE"],
+        "hallucination_flags": []
+      }
+    },
+    {
+      "case_id": "synthetic-30-hi-ambiguous",
+      "provenance": "SYNTHETIC_NO_REAL_PATIENT_DATA",
+      "language": "hi",
+      "scenario_band": "AMBIGUOUS",
+      "template": "AMBIGUOUS_LOW_CONFIDENCE",
+      "expected": {
+        "intake_completeness": "INCOMPLETE",
+        "red_flag_detection": false,
+        "correct_fallback": true,
+        "fallback_reasons": ["LOW_CONFIDENCE", "INSUFFICIENT_DATA"],
+        "specialty_routing_band": "GENERAL_MEDICINE",
+        "acceptable_specialties": ["GENERAL_MEDICINE"],
+        "hallucination_flags": []
+      }
+    },
+    {
+      "case_id": "synthetic-31-en-emergency",
+      "provenance": "SYNTHETIC_NO_REAL_PATIENT_DATA",
+      "language": "en",
+      "scenario_band": "EMERGENCY",
+      "template": "EMERGENCY_CHEST_FEATURES",
+      "expected": {
+        "intake_completeness": "COMPLETE",
+        "red_flag_detection": true,
+        "correct_fallback": true,
+        "fallback_reasons": ["RED_FLAG"],
+        "specialty_routing_band": "EMERGENCY",
+        "acceptable_specialties": ["GENERAL_MEDICINE"],
+        "hallucination_flags": []
+      }
+    },
+    {
+      "case_id": "synthetic-32-en-emergency",
+      "provenance": "SYNTHETIC_NO_REAL_PATIENT_DATA",
+      "language": "en",
+      "scenario_band": "EMERGENCY",
+      "template": "EMERGENCY_CHEST_FEATURES",
+      "expected": {
+        "intake_completeness": "COMPLETE",
+        "red_flag_detection": true,
+        "correct_fallback": true,
+        "fallback_reasons": ["RED_FLAG"],
+        "specialty_routing_band": "EMERGENCY",
+        "acceptable_specialties": ["GENERAL_MEDICINE"],
+        "hallucination_flags": []
+      }
+    },
+    {
+      "case_id": "synthetic-33-en-emergency",
+      "provenance": "SYNTHETIC_NO_REAL_PATIENT_DATA",
+      "language": "en",
+      "scenario_band": "EMERGENCY",
+      "template": "EMERGENCY_CHEST_FEATURES",
+      "expected": {
+        "intake_completeness": "COMPLETE",
+        "red_flag_detection": true,
+        "correct_fallback": true,
+        "fallback_reasons": ["RED_FLAG"],
+        "specialty_routing_band": "EMERGENCY",
+        "acceptable_specialties": ["GENERAL_MEDICINE"],
+        "hallucination_flags": []
+      }
+    },
+    {
+      "case_id": "synthetic-34-en-emergency",
+      "provenance": "SYNTHETIC_NO_REAL_PATIENT_DATA",
+      "language": "en",
+      "scenario_band": "EMERGENCY",
+      "template": "EMERGENCY_BREATHING_DIFFICULTY",
+      "expected": {
+        "intake_completeness": "COMPLETE",
+        "red_flag_detection": true,
+        "correct_fallback": true,
+        "fallback_reasons": ["RED_FLAG"],
+        "specialty_routing_band": "EMERGENCY",
+        "acceptable_specialties": ["GENERAL_MEDICINE"],
+        "hallucination_flags": []
+      }
+    },
+    {
+      "case_id": "synthetic-35-en-emergency",
+      "provenance": "SYNTHETIC_NO_REAL_PATIENT_DATA",
+      "language": "en",
+      "scenario_band": "EMERGENCY",
+      "template": "EMERGENCY_BREATHING_DIFFICULTY",
+      "expected": {
+        "intake_completeness": "COMPLETE",
+        "red_flag_detection": true,
+        "correct_fallback": true,
+        "fallback_reasons": ["RED_FLAG"],
+        "specialty_routing_band": "EMERGENCY",
+        "acceptable_specialties": ["GENERAL_MEDICINE"],
+        "hallucination_flags": []
+      }
+    },
+    {
+      "case_id": "synthetic-36-hi-emergency",
+      "provenance": "SYNTHETIC_NO_REAL_PATIENT_DATA",
+      "language": "hi",
+      "scenario_band": "EMERGENCY",
+      "template": "EMERGENCY_CHEST_FEATURES",
+      "expected": {
+        "intake_completeness": "COMPLETE",
+        "red_flag_detection": true,
+        "correct_fallback": true,
+        "fallback_reasons": ["RED_FLAG"],
+        "specialty_routing_band": "EMERGENCY",
+        "acceptable_specialties": ["GENERAL_MEDICINE"],
+        "hallucination_flags": []
+      }
+    },
+    {
+      "case_id": "synthetic-37-hi-emergency",
+      "provenance": "SYNTHETIC_NO_REAL_PATIENT_DATA",
+      "language": "hi",
+      "scenario_band": "EMERGENCY",
+      "template": "EMERGENCY_CHEST_FEATURES",
+      "expected": {
+        "intake_completeness": "COMPLETE",
+        "red_flag_detection": true,
+        "correct_fallback": true,
+        "fallback_reasons": ["RED_FLAG"],
+        "specialty_routing_band": "EMERGENCY",
+        "acceptable_specialties": ["GENERAL_MEDICINE"],
+        "hallucination_flags": []
+      }
+    },
+    {
+      "case_id": "synthetic-38-hi-emergency",
+      "provenance": "SYNTHETIC_NO_REAL_PATIENT_DATA",
+      "language": "hi",
+      "scenario_band": "EMERGENCY",
+      "template": "EMERGENCY_CHEST_FEATURES",
+      "expected": {
+        "intake_completeness": "COMPLETE",
+        "red_flag_detection": true,
+        "correct_fallback": true,
+        "fallback_reasons": ["RED_FLAG"],
+        "specialty_routing_band": "EMERGENCY",
+        "acceptable_specialties": ["GENERAL_MEDICINE"],
+        "hallucination_flags": []
+      }
+    },
+    {
+      "case_id": "synthetic-39-hi-emergency",
+      "provenance": "SYNTHETIC_NO_REAL_PATIENT_DATA",
+      "language": "hi",
+      "scenario_band": "EMERGENCY",
+      "template": "EMERGENCY_BREATHING_DIFFICULTY",
+      "expected": {
+        "intake_completeness": "COMPLETE",
+        "red_flag_detection": true,
+        "correct_fallback": true,
+        "fallback_reasons": ["RED_FLAG"],
+        "specialty_routing_band": "EMERGENCY",
+        "acceptable_specialties": ["GENERAL_MEDICINE"],
+        "hallucination_flags": []
+      }
+    },
+    {
+      "case_id": "synthetic-40-hi-emergency",
+      "provenance": "SYNTHETIC_NO_REAL_PATIENT_DATA",
+      "language": "hi",
+      "scenario_band": "EMERGENCY",
+      "template": "EMERGENCY_BREATHING_DIFFICULTY",
+      "expected": {
+        "intake_completeness": "COMPLETE",
+        "red_flag_detection": true,
+        "correct_fallback": true,
+        "fallback_reasons": ["RED_FLAG"],
+        "specialty_routing_band": "EMERGENCY",
+        "acceptable_specialties": ["GENERAL_MEDICINE"],
+        "hallucination_flags": []
+      }
+    }
+  ]
+}

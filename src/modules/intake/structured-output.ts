@@ -116,6 +116,7 @@ export type IntakeStructuredOutput = z.infer<
 >;
 
 export const INTAKE_STRUCTURED_SCHEMA_VERSION = 'intake-v1';
+export const INTAKE_PROMPT_VERSION = 'intake-prompt-v1';
 
 export const INTAKE_ORCHESTRATOR_INSTRUCTIONS = withAISecurityInstructions(
   `
