@@ -4,12 +4,15 @@ import { LocalDateTime } from '@/app/_components/local-date-time';
 import {
   consentPurposeLabels,
   consentVersions,
+  privacyRequestTypeLabels,
   type ManagedConsentPurpose,
   type PatientConsentRecord,
 } from '@/modules/patient';
 import { listOwnManagedConsents } from '@/modules/patient/consent-server';
+import { listOwnPrivacyRequests } from '@/modules/patient/privacy-request-server';
 
 import { ConsentControl } from './consent-control';
+import { PrivacyRequestForm } from './privacy-request-form';
 
 const purposes = Object.keys(consentVersions) as ManagedConsentPurpose[];
 
@@ -22,7 +25,10 @@ function latestForPurpose(
 
 export default async function PatientPrivacyPage() {
   try {
-    const records = await listOwnManagedConsents();
+    const [records, privacyRequests] = await Promise.all([
+      listOwnManagedConsents(),
+      listOwnPrivacyRequests(),
+    ]);
     return (
       <main>
         <h1>Consent and privacy center</h1>
@@ -69,6 +75,32 @@ export default async function PatientPrivacyPage() {
             );
           })}
         </div>
+        <section>
+          <h2>Account and privacy requests</h2>
+          <p>
+            Request an export, correction, account deactivation or deletion
+            review, or submit a grievance. A reviewer will process the request;
+            submission does not automatically change or delete records.
+          </p>
+          <PrivacyRequestForm />
+          <h3>Your request history</h3>
+          {privacyRequests.length ? (
+            <ul>
+              {privacyRequests.map((request) => (
+                <li key={request.id}>
+                  {privacyRequestTypeLabels[request.requestType]} —{' '}
+                  {request.status.toLowerCase().replaceAll('_', ' ')} —{' '}
+                  <LocalDateTime startsAt={request.createdAt} />
+                  {request.protectedRecordsRetained
+                    ? ' — protected medical records retained'
+                    : null}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p>No privacy requests submitted.</p>
+          )}
+        </section>
         <p>
           <Link href="/patient">Back to patient area</Link>
         </p>

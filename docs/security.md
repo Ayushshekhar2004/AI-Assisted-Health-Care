@@ -127,6 +127,21 @@ critical finding:
 Do not run automated force upgrades without reviewing breaking changes. Moderate or lower findings
 still require triage for reachability and healthcare-data impact.
 
+## Data retention
+
+Automated retention must use the versioned server-only job described in `docs/data-retention.md`.
+Dry-run is the default. Apply mode requires an explicit server-only enable flag and may mutate only
+allow-listed disposable classifications. Age is never sufficient authorization to delete a clinical
+record, transcript, prescription, registered document, consent record, or audit event. Unresolved
+legal schedules, legal-hold behavior, backup propagation, and anonymization standards are production
+launch blockers.
+
+Privacy requests are sensitive records. Patients may submit and view status only for their own
+requests; operations access is server-authorized, paginated, and audited. Request details must never
+be copied into audit events or application logs. Export, correction, account deactivation/deletion,
+and grievance requests enter reviewed processing. A workflow status is not authorization to delete
+or rewrite finalized medical records.
+
 ## Security verification before merge
 
 Test authentication, allowed role/resource combinations, denied role/resource combinations, tenant

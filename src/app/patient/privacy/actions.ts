@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 
 import { recordOwnConsentDecision } from '@/modules/patient/consent-server';
+import { submitOwnPrivacyRequest } from '@/modules/patient/privacy-request-server';
 
 export type ConsentActionState = Readonly<{
   message: string;
@@ -27,4 +28,27 @@ export async function recordConsentDecisionAction(
   }
   revalidatePath('/patient/privacy');
   return { message: 'Consent decision recorded.', status: 'success' };
+}
+
+export async function submitPrivacyRequestAction(
+  _state: ConsentActionState,
+  formData: FormData,
+): Promise<ConsentActionState> {
+  try {
+    await submitOwnPrivacyRequest({
+      details: formData.get('details'),
+      requestType: formData.get('requestType'),
+    });
+  } catch {
+    return {
+      message:
+        'Unable to submit this privacy request. Review it and try again.',
+      status: 'error',
+    };
+  }
+  revalidatePath('/patient/privacy');
+  return {
+    message: 'Request queued for reviewed processing.',
+    status: 'success',
+  };
 }

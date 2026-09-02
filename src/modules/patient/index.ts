@@ -38,3 +38,17 @@ export {
   patientHistoryQuerySchema,
 } from './history';
 export type { PatientHistoryItem, PatientHistoryQuery } from './history';
+export {
+  patientPrivacyRequestSchema,
+  privacyRequestInputSchema,
+  privacyRequestStatusSchema,
+  privacyRequestTransitionSchema,
+  privacyRequestTypeLabels,
+  privacyRequestTypeSchema,
+  privacyResolutionCategorySchema,
+} from './privacy-request';
+export type {
+  PatientPrivacyRequest,
+  PrivacyRequestInput,
+  PrivacyRequestType,
+} from './privacy-request';

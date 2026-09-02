@@ -111,3 +111,16 @@ use without rewriting historical versions. Revocation is rejected while an activ
 teleconsultation, or document scan still depends on that purpose, and a recorded withdrawal blocks
 new processing for that purpose. Operations audit lookup stays within the audit module and exposes
 only paginated, allow-listed event fields over a maximum 31-day range.
+
+Data retention belongs to a server-only retention module and trusted scheduled-job boundary. The
+versioned development policy may dispose only terminal notification logistics and expired orphaned
+private uploads. Registered documents and all clinical, transcript, prescription, consent, and audit
+records remain protected pending an approved legal schedule. Apply mode is disabled by default,
+batch-bounded, version-gated, and audited without content. See `docs/data-retention.md`.
+
+Account and privacy requests are a separate append-only patient workflow for export, correction,
+account deactivation/deletion review, and grievances. Patients can submit and view only their own
+request status; operations can access details only through the audited review queue. Status changes
+do not directly mutate identity or clinical tables. In particular, an account deletion request
+cannot delete finalized consultations, prescriptions, transcripts, or registered documents while
+the legal and clinical retention schedule remains unresolved.
