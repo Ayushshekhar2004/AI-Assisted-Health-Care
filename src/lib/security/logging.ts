@@ -4,6 +4,7 @@ const allowedLogKeys = new Set([
   'category',
   'correlationId',
   'durationMs',
+  'identifierHash',
   'method',
   'outcome',
   'path',

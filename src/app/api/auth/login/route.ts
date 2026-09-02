@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 
 import { isTrustedSameOriginForm } from '@/lib/security/request';
 import { createRouteClient } from '@/lib/supabase/route';
+import { recordOperationalMetric } from '@/modules/monitoring/server';
 import {
   emailCredentialsSchema,
   getRoleHome,
@@ -26,6 +27,11 @@ export async function POST(request: NextRequest) {
       request.headers.get('content-type'),
     )
   ) {
+    recordOperationalMetric({
+      event: 'auth.failure',
+      category: 'login',
+      outcome: 'csrf',
+    });
     return NextResponse.json(
       { error: 'Request is unavailable' },
       { status: 403 },
@@ -37,16 +43,34 @@ export async function POST(request: NextRequest) {
     email: formData?.get('email'),
     password: formData?.get('password'),
   });
-  if (!credentials.success) return loginRedirect(request, true);
+  if (!credentials.success) {
+    recordOperationalMetric({
+      event: 'auth.failure',
+      category: 'login',
+      outcome: 'invalid_input',
+    });
+    return loginRedirect(request, true);
+  }
 
   const { applyCookies, supabase } = createRouteClient(request);
   const adapter = new SupabaseAuthAdapter(supabase);
   try {
     const result = await adapter.signInWithEmail(credentials.data);
-    if (!result.authenticated)
+    if (!result.authenticated) {
+      recordOperationalMetric({
+        event: 'auth.failure',
+        category: 'login',
+        outcome: 'credentials',
+      });
       return applyCookies(loginRedirect(request, true));
+    }
     const role = await resolveCurrentRole(supabase);
     if (!role) {
+      recordOperationalMetric({
+        event: 'auth.failure',
+        category: 'login',
+        outcome: 'role',
+      });
       await adapter.signOut();
       return applyCookies(loginRedirect(request, true));
     }
@@ -58,6 +82,11 @@ export async function POST(request: NextRequest) {
       NextResponse.redirect(new URL(destination, request.nextUrl.origin), 303),
     );
   } catch {
+    recordOperationalMetric({
+      event: 'auth.failure',
+      category: 'login',
+      outcome: 'provider',
+    });
     return applyCookies(loginRedirect(request, true));
   }
 }

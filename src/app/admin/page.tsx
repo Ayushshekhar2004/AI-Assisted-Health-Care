@@ -17,6 +17,9 @@ export default function AdminHomePage() {
       <p>
         <Link href="/admin/privacy-requests">Review privacy requests</Link>
       </p>
+      <p>
+        <Link href="/admin/health">View service health</Link>
+      </p>
       <form action={logoutAction}>
         <button type="submit">Sign out</button>
       </form>

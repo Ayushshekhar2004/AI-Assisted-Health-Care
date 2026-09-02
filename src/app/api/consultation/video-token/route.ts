@@ -7,6 +7,10 @@ import {
   isTrustedVideoTokenRequest,
 } from '../../../../modules/consultation/index';
 import { createAppointmentVideoToken } from '../../../../modules/consultation/video-server';
+import {
+  recordOperationalMetric,
+  tryHashMonitoringIdentifier,
+} from '../../../../modules/monitoring/server';
 
 const noStoreHeaders = { 'Cache-Control': 'no-store, private' } as const;
 
@@ -18,6 +22,11 @@ export async function POST(request: NextRequest) {
       request.headers.get('content-type'),
     )
   ) {
+    recordOperationalMetric({
+      event: 'video_token.error',
+      category: 'csrf',
+      status: 403,
+    });
     return NextResponse.json(
       { error: 'Video consultation is unavailable' },
       { status: 403, headers: noStoreHeaders },
@@ -28,6 +37,11 @@ export async function POST(request: NextRequest) {
   try {
     body = await readLimitedJson(request);
   } catch {
+    recordOperationalMetric({
+      event: 'video_token.error',
+      category: 'invalid_input',
+      status: 400,
+    });
     return NextResponse.json(
       { error: 'Video consultation is unavailable' },
       { status: 400, headers: noStoreHeaders },
@@ -35,6 +49,11 @@ export async function POST(request: NextRequest) {
   }
   const input = appointmentVideoTokenRequestSchema.safeParse(body);
   if (!input.success) {
+    recordOperationalMetric({
+      event: 'video_token.error',
+      category: 'invalid_input',
+      status: 400,
+    });
     return NextResponse.json(
       { error: 'Video consultation is unavailable' },
       { status: 400, headers: noStoreHeaders },
@@ -46,6 +65,14 @@ export async function POST(request: NextRequest) {
       headers: noStoreHeaders,
     });
   } catch {
+    recordOperationalMetric({
+      event: 'video_token.error',
+      category: 'authorization',
+      status: 403,
+      identifierHash: await tryHashMonitoringIdentifier(
+        input.data.appointmentId,
+      ),
+    });
     return NextResponse.json(
       { error: 'Video consultation is unavailable' },
       { status: 403, headers: noStoreHeaders },

@@ -5,6 +5,10 @@ import { z } from 'zod';
 
 import { getSupabaseAdminConfig } from '@/lib/supabase/admin-config';
 import { createClient } from '@/lib/supabase/server';
+import {
+  recordOperationalMetric,
+  tryHashMonitoringIdentifier,
+} from '@/modules/monitoring/server';
 
 import {
   getAppointmentNotificationContent,
@@ -64,7 +68,14 @@ async function dispatchClaimedEvents(
     p_appointment_id: appointmentId,
     p_limit: 50,
   });
-  if (error) throw new Error('Notifications are unavailable');
+  if (error) {
+    recordOperationalMetric({
+      event: 'notification.failure',
+      category: 'claim',
+      outcome: 'database',
+    });
+    throw new Error('Notifications are unavailable');
+  }
 
   const events = z
     .array(z.unknown())
@@ -89,6 +100,12 @@ async function dispatchClaimedEvents(
         null,
       );
     } catch {
+      recordOperationalMetric({
+        event: 'notification.failure',
+        category: 'delivery',
+        outcome: 'provider',
+        identifierHash: await tryHashMonitoringIdentifier(event.id),
+      });
       await finishEvent(privileged, event.id, false, null, 'PROVIDER_ERROR');
     }
   }
@@ -146,5 +163,13 @@ async function finishEvent(
     p_provider_message_id: providerMessageId,
     p_succeeded: succeeded,
   });
-  if (error) throw new Error('Notifications are unavailable');
+  if (error) {
+    recordOperationalMetric({
+      event: 'notification.failure',
+      category: 'finalize',
+      outcome: 'database',
+      identifierHash: await tryHashMonitoringIdentifier(eventId),
+    });
+    throw new Error('Notifications are unavailable');
+  }
 }

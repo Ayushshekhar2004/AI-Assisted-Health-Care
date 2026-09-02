@@ -61,6 +61,19 @@ Application security logs must use the centralized allow-listed logger, which re
 names and rejects nested or arbitrary values. Do not pass clinical content to the logger and do not
 assume redaction makes patient content safe to collect.
 
+Operational metrics use a strict discriminated schema and contain only categorical event values,
+bounded status/duration values, and optional salted SHA-256 identifier pseudonyms. The monitoring
+salt is server-only, distinct from other salts, and at least 32 characters. Monitoring providers
+must not receive raw identifiers, exception messages, URLs, email addresses, clinical content, AI
+prompts/outputs, or notification bodies. Provider export is disabled until a separately reviewed
+production adapter and data-processing configuration are approved.
+
+The public health endpoint returns only application liveness. Database, private storage, AI, video,
+and recent failure details require an authenticated operations role and are checked again within the
+server service. Readiness responses must not include provider URLs, bucket names, database records,
+raw exception messages, identifiers, or credentials. Dependency probes are bounded by short
+timeouts and send no patient or clinician content.
+
 ## AI instruction and tool boundaries
 
 Patient and clinician text is data, not authority. Server-side model adapters place it in a marked

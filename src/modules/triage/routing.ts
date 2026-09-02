@@ -17,6 +17,7 @@ import {
   runAIWorkflow,
   type AIFailureCode,
 } from '../../lib/ai/failure';
+import { recordOperationalMetric } from '../monitoring/server';
 
 export const ROUTING_CONFIDENCE_THRESHOLD = 0.65;
 export const ROUTING_POLICY_VERSION = 'specialty-routing-policy-v1';
@@ -138,6 +139,13 @@ export async function routeIntakeToSpecialty(
   if (input.redFlagDetected) fallbackReasons.push('RED_FLAG');
 
   const usesFallback = fallbackReasons.length > 0;
+  if (usesFallback) {
+    recordOperationalMetric({
+      event: 'routing.fallback',
+      category: fallbackReasons[0],
+      outcome: 'general_medicine',
+    });
+  }
   const routingResult = finalRoutingResultSchema.parse({
     ...output,
     recommended_specialty: usesFallback
@@ -175,6 +183,11 @@ function createUnavailableRoutingFallback(
     fallbackReasons.push('INSUFFICIENT_DATA');
   }
   if (input.redFlagDetected) fallbackReasons.push('RED_FLAG');
+  recordOperationalMetric({
+    event: 'routing.fallback',
+    category: fallbackReasons[0],
+    outcome: 'general_medicine',
+  });
   const output = routingOutputSchema.parse({
     recommended_specialty: DEFAULT_PILOT_SPECIALTY,
     alternate_specialty: null,

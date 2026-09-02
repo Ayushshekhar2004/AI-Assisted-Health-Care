@@ -18,6 +18,7 @@ Domain modules live under `src/modules`:
 - `prescription`: clinician-controlled prescription workflow
 - `notification`: private event generation and server-side delivery providers
 - `audit`: security and compliance event recording
+- `monitoring`: content-free operational errors, counters, and latency measurements
 
 Code in `src/app` defines delivery concerns such as pages, layouts, route handlers, and request
 composition. It may call module public APIs but must not contain duplicated domain policy.
@@ -149,3 +150,11 @@ request status; operations can access details only through the audited review qu
 do not directly mutate identity or clinical tables. In particular, an account deletion request
 cannot delete finalized consultations, prescriptions, transcripts, or registered documents while
 the legal and clinical retention schedule remains unresolved.
+
+Operational monitoring is a server-only module with a strict event catalog. Domain boundaries emit
+categorical failures and bounded latency values through a provider abstraction. Raw identifiers are
+excluded or transformed with a dedicated salted SHA-256 pseudonym before emission. Monitoring is
+operational evidence, not an audit ledger, and must never receive clinical text or credentials.
+The public `/health` route is liveness-only and bypasses dependency/session checks. Detailed active
+readiness probes and recent process-local failure counts are available only inside the authorized
+operations area. Probe results expose categorical status and latency, never endpoints or errors.

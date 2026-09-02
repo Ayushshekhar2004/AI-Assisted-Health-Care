@@ -45,3 +45,4 @@ export {
   getAppointmentRoomName,
   isTrustedVideoTokenRequest,
 } from './video';
+export { getLiveKitConfig } from './livekit-config';

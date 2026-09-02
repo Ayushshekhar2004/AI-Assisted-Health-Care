@@ -14,7 +14,7 @@ import {
 import { useState } from 'react';
 import { Track } from 'livekit-client';
 
-import { appointmentVideoTokenResponseSchema } from '../../modules/consultation/index';
+import { appointmentVideoTokenResponseSchema } from '../../modules/consultation/video';
 
 type VideoConnection = Readonly<{
   serverUrl: string;

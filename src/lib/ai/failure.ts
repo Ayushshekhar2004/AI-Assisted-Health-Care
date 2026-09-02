@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { writeSecurityLog } from '../security/logging';
+import { recordOperationalMetric } from '../../modules/monitoring/server';
 import { isAIProviderError, type AIProviderErrorCode } from './provider-error';
 
 export const aiWorkflowSchema = z.enum([
@@ -48,7 +48,8 @@ export async function runAIWorkflow<T>(
   const startedAt = Date.now();
   try {
     const value = await operation();
-    writeSecurityLog('ai.workflow', {
+    recordOperationalMetric({
+      event: 'ai.workflow',
       category: workflow,
       durationMs: Date.now() - startedAt,
       outcome: 'success',
@@ -56,7 +57,8 @@ export async function runAIWorkflow<T>(
     return value;
   } catch (error) {
     const failure = normalizeFailure(error);
-    writeSecurityLog('ai.workflow', {
+    recordOperationalMetric({
+      event: 'ai.workflow',
       category: workflow,
       durationMs: Date.now() - startedAt,
       outcome: failure.code.toLowerCase(),
@@ -67,7 +69,8 @@ export async function runAIWorkflow<T>(
 
 export function recordAILowConfidence(workflowInput: unknown): void {
   const workflow = aiWorkflowSchema.parse(workflowInput);
-  writeSecurityLog('ai.workflow', {
+  recordOperationalMetric({
+    event: 'ai.workflow',
     category: workflow,
     outcome: 'low_confidence_fallback',
   });

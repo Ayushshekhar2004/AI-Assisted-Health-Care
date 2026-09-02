@@ -2,7 +2,7 @@
 
 import { useActionState } from 'react';
 
-import { EMERGENCY_SCREENING_QUESTIONS } from '@/modules/triage';
+import { EMERGENCY_SCREENING_QUESTIONS } from '@/modules/triage/screening';
 
 import {
   submitEmergencyScreeningAction,

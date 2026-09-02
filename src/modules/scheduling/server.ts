@@ -1,4 +1,8 @@
 import { z } from 'zod';
+import {
+  recordOperationalMetric,
+  tryHashMonitoringIdentifier,
+} from '@/modules/monitoring/server';
 
 import { createRoleAuthorizedClient, type ProfileRole } from '@/modules/auth';
 import { dispatchNotificationEventsForAppointment } from '@/modules/notification/server';
@@ -247,12 +251,32 @@ export async function listDoctorDashboardAppointments(
 }
 
 export async function bookAvailability(input: unknown): Promise<void> {
-  const availabilityId = parseAvailabilityId(input);
-  const supabase = await createAuthorizedClient('patient');
-  const { error } = await supabase.rpc('request_appointment', {
-    p_doctor_availability_id: availabilityId,
-  });
-  if (error) throw new Error('Scheduling is unavailable');
+  let availabilityId: string;
+  try {
+    availabilityId = parseAvailabilityId(input);
+  } catch {
+    recordOperationalMetric({
+      event: 'appointment.booking_failure',
+      category: 'standard',
+      outcome: 'invalid_input',
+    });
+    throw new Error('Scheduling is unavailable');
+  }
+  try {
+    const supabase = await createAuthorizedClient('patient');
+    const { error } = await supabase.rpc('request_appointment', {
+      p_doctor_availability_id: availabilityId,
+    });
+    if (error) throw error;
+  } catch {
+    recordOperationalMetric({
+      event: 'appointment.booking_failure',
+      category: 'standard',
+      outcome: 'database',
+      identifierHash: await tryHashMonitoringIdentifier(availabilityId),
+    });
+    throw new Error('Scheduling is unavailable');
+  }
 }
 
 const appointmentTransitionSchema = z.object({
@@ -358,11 +382,31 @@ export async function listFollowUpBookingOptions(
 }
 
 export async function bookFollowUp(input: unknown): Promise<void> {
-  const value = followUpBookingSchema.parse(input);
-  const supabase = await createAuthorizedClient('patient');
-  const { error } = await supabase.rpc('book_follow_up_appointment', {
-    p_availability_id: value.availabilityId,
-    p_recommendation_id: value.recommendationId,
-  });
-  if (error) throw new Error('Follow-up booking is unavailable');
+  let value: z.infer<typeof followUpBookingSchema>;
+  try {
+    value = followUpBookingSchema.parse(input);
+  } catch {
+    recordOperationalMetric({
+      event: 'appointment.booking_failure',
+      category: 'follow_up',
+      outcome: 'invalid_input',
+    });
+    throw new Error('Follow-up booking is unavailable');
+  }
+  try {
+    const supabase = await createAuthorizedClient('patient');
+    const { error } = await supabase.rpc('book_follow_up_appointment', {
+      p_availability_id: value.availabilityId,
+      p_recommendation_id: value.recommendationId,
+    });
+    if (error) throw error;
+  } catch {
+    recordOperationalMetric({
+      event: 'appointment.booking_failure',
+      category: 'follow_up',
+      outcome: 'database',
+      identifierHash: await tryHashMonitoringIdentifier(value.availabilityId),
+    });
+    throw new Error('Follow-up booking is unavailable');
+  }
 }

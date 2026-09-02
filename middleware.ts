@@ -9,6 +9,7 @@ import {
   isSameOriginRequest,
   isTrustedSameOriginForm,
 } from '@/lib/security/request';
+import { recordOperationalMetric } from '@/modules/monitoring/server';
 
 const unsafeMethods = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 const endpointPolicies: ReadonlyArray<
@@ -48,6 +49,9 @@ async function opaqueClientKey(request: NextRequest): Promise<string> {
 }
 
 export async function middleware(request: NextRequest) {
+  if (request.method === 'GET' && request.nextUrl.pathname === '/health') {
+    return NextResponse.next();
+  }
   if (unsafeMethods.has(request.method)) {
     const expectedOrigin =
       process.env.NEXT_PUBLIC_SITE_URL ?? request.nextUrl.origin;
@@ -60,6 +64,12 @@ export async function middleware(request: NextRequest) {
         request.headers.get('content-type'),
       );
     if (!isTrustedRequest) {
+      recordOperationalMetric({
+        event: 'request.error',
+        category: 'csrf',
+        method: request.method,
+        status: 403,
+      });
       return NextResponse.json(
         { error: 'Request is unavailable' },
         { status: 403, headers: { 'Cache-Control': 'no-store, private' } },
@@ -73,6 +83,12 @@ export async function middleware(request: NextRequest) {
       const [, policy, maximumBytes] = matched;
       const contentLength = Number(request.headers.get('content-length'));
       if (Number.isFinite(contentLength) && contentLength > maximumBytes) {
+        recordOperationalMetric({
+          event: 'request.error',
+          category: 'request_size',
+          method: request.method,
+          status: 413,
+        });
         return NextResponse.json(
           { error: 'Request is unavailable' },
           { status: 413, headers: { 'Cache-Control': 'no-store, private' } },
@@ -81,6 +97,12 @@ export async function middleware(request: NextRequest) {
       const key = `${request.nextUrl.pathname}:${await opaqueClientKey(request)}`;
       const rateLimit = checkRateLimit(key, policy);
       if (!rateLimit.allowed) {
+        recordOperationalMetric({
+          event: 'request.error',
+          category: 'rate_limit',
+          method: request.method,
+          status: 429,
+        });
         return NextResponse.json(
           { error: 'Request is unavailable' },
           {
