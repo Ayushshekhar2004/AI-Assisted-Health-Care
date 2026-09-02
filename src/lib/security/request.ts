@@ -14,6 +14,26 @@ export function isSameOriginRequest(
   }
 }
 
+export function isTrustedSameOriginForm(
+  origin: string | null,
+  expectedOrigin: string,
+  fetchSite: string | null,
+  contentType: string | null,
+): boolean {
+  const normalizedContentType = contentType
+    ?.split(';', 1)[0]
+    ?.trim()
+    .toLowerCase();
+  const isFormContent =
+    normalizedContentType === 'application/x-www-form-urlencoded' ||
+    normalizedContentType === 'multipart/form-data';
+
+  if (!isFormContent) return false;
+  if (isSameOriginRequest(origin, expectedOrigin)) return true;
+
+  return (origin === null || origin === 'null') && fetchSite === 'same-origin';
+}
+
 export function isJsonRequest(contentType: string | null): boolean {
   return (
     contentType?.split(';', 1)[0]?.trim().toLowerCase() === 'application/json'

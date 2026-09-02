@@ -1,27 +1,13 @@
-'use client';
-
-import { useActionState } from 'react';
-
 import {
   INTAKE_PROCESSING_CONSENT_VERSION,
   TELECONSULTATION_CONSENT_VERSION,
-} from '@/modules/patient';
+} from '../../../modules/patient';
 
-import {
-  completeOnboardingAction,
-  type OnboardingActionState,
-} from './actions';
-
-const initialState: OnboardingActionState = { message: '', status: 'idle' };
-
-export function OnboardingForm() {
-  const [state, formAction, pending] = useActionState(
-    completeOnboardingAction,
-    initialState,
-  );
-
+export function OnboardingForm({
+  error = false,
+}: Readonly<{ error?: boolean }>) {
   return (
-    <form action={formAction} className="auth-form">
+    <form action="/api/patient/onboarding" className="auth-form" method="post">
       <label>
         Preferred language
         <select defaultValue="en" name="preferredLanguage" required>
@@ -93,11 +79,11 @@ export function OnboardingForm() {
         </label>
       </fieldset>
 
-      <button disabled={pending} type="submit">
-        {pending ? 'Saving…' : 'Complete onboarding'}
-      </button>
+      <button type="submit">Complete onboarding</button>
       <p aria-live="polite" className="auth-message" role="status">
-        {state.message}
+        {error
+          ? 'Unable to save onboarding. Review the form and try again.'
+          : ''}
       </p>
     </form>
   );

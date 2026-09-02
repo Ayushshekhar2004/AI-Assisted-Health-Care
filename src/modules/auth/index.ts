@@ -1,5 +1,5 @@
 export { getRoleHome, getSafeRedirectPath, isProtectedPath } from './redirects';
-export { getCurrentRole, requireRole } from './session';
+export { getCurrentRole, requireRole, resolveCurrentRole } from './session';
 export { createRoleAuthorizedClient } from './server-authorization';
 export { SupabaseAuthAdapter } from './supabase-adapter';
 export { profileRoleSchema } from './types';

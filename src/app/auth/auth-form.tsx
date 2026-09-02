@@ -1,26 +1,20 @@
-'use client';
-
 import Link from 'next/link';
-import { useActionState } from 'react';
-import type { AuthActionState } from './actions';
 
 type AuthFormProps = Readonly<{
-  action: (
-    state: AuthActionState,
-    formData: FormData,
-  ) => Promise<AuthActionState>;
+  error?: boolean;
   mode: 'login' | 'sign-up';
   nextPath?: string | undefined;
 }>;
 
-const initialState: AuthActionState = { message: '', status: 'idle' };
-
-export function AuthForm({ action, mode, nextPath }: AuthFormProps) {
-  const [state, formAction, pending] = useActionState(action, initialState);
+export function AuthForm({ error = false, mode, nextPath }: AuthFormProps) {
   const isLogin = mode === 'login';
 
   return (
-    <form action={formAction} className="auth-form">
+    <form
+      action={isLogin ? '/api/auth/login' : '/api/auth/sign-up'}
+      className="auth-form"
+      method="post"
+    >
       <label>
         Email
         <input autoComplete="email" name="email" required type="email" />
@@ -36,15 +30,13 @@ export function AuthForm({ action, mode, nextPath }: AuthFormProps) {
         />
       </label>
       {nextPath ? <input name="next" type="hidden" value={nextPath} /> : null}
-      <button disabled={pending} type="submit">
-        {pending
-          ? 'Please wait…'
-          : isLogin
-            ? 'Sign in'
-            : 'Create patient account'}
+      <button type="submit">
+        {isLogin ? 'Sign in' : 'Create patient account'}
       </button>
       <p aria-live="polite" className="auth-message" role="status">
-        {state.message}
+        {error
+          ? 'Unable to complete the request. Check your details and try again.'
+          : ''}
       </p>
       <p>
         {isLogin ? 'Need an account? ' : 'Already registered? '}

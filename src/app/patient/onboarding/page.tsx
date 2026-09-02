@@ -1,6 +1,13 @@
 import { OnboardingForm } from './onboarding-form';
 
-export default function PatientOnboardingPage() {
+type PatientOnboardingPageProps = Readonly<{
+  searchParams: Promise<{ error?: string }>;
+}>;
+
+export default async function PatientOnboardingPage({
+  searchParams,
+}: PatientOnboardingPageProps) {
+  const params = await searchParams;
   return (
     <main className="auth-card">
       <h1>Patient onboarding</h1>
@@ -8,7 +15,7 @@ export default function PatientOnboardingPage() {
         Your onboarding details are private and available only through
         authorized workflows.
       </p>
-      <OnboardingForm />
+      <OnboardingForm error={params.error === '1'} />
     </main>
   );
 }

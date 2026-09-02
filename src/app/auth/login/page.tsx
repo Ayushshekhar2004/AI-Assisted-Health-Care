@@ -1,18 +1,18 @@
-import { loginAction } from '../actions';
 import { AuthForm } from '../auth-form';
 
 type LoginPageProps = Readonly<{
-  searchParams: Promise<{ next?: string | string[] }>;
+  searchParams: Promise<{ error?: string; next?: string | string[] }>;
 }>;
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
-  const next = (await searchParams).next;
+  const params = await searchParams;
+  const next = params.next;
 
   return (
     <main className="auth-card">
       <h1>Sign in</h1>
       <AuthForm
-        action={loginAction}
+        error={params.error === '1'}
         mode="login"
         nextPath={typeof next === 'string' ? next : undefined}
       />

@@ -87,8 +87,10 @@ not reproduce fixture narratives or be populated from production exports.
 
 ## Web request protections
 
-- State-changing requests require a same-origin `Origin` header. Next.js Server Actions retain their
-  built-in origin validation, and middleware adds the same check before auth and intake actions.
+- State-changing requests require an exact same-origin `Origin` header. For browser HTML forms where
+  Safari omits `Origin`, middleware accepts only a browser-controlled `Sec-Fetch-Site: same-origin`
+  fallback with a form content type. JSON/API mutations do not receive this fallback. Next.js Server
+  Actions retain their built-in origin validation.
 - Supabase session cookies are normalized to `HttpOnly`, `SameSite=Lax`, root path, and `Secure` on
   HTTPS responses. Authentication state must not be copied into browser storage.
 - Auth, intake, realtime-token, video-token, and consultation-start endpoints have bounded

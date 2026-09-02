@@ -5,14 +5,17 @@ import {
   checkRateLimit,
   type RateLimitPolicy,
 } from '@/lib/security/rate-limit';
-import { isSameOriginRequest } from '@/lib/security/request';
+import {
+  isSameOriginRequest,
+  isTrustedSameOriginForm,
+} from '@/lib/security/request';
 
 const unsafeMethods = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 const endpointPolicies: ReadonlyArray<
   readonly [RegExp, RateLimitPolicy, number]
 > = [
   [
-    /^\/auth\/(login|sign-up)\/?$/,
+    /^\/(?:api\/)?auth\/(login|sign-up)\/?$/,
     { limit: 10, windowMs: 15 * 60_000 },
     16 * 1024,
   ],
@@ -48,7 +51,15 @@ export async function middleware(request: NextRequest) {
   if (unsafeMethods.has(request.method)) {
     const expectedOrigin =
       process.env.NEXT_PUBLIC_SITE_URL ?? request.nextUrl.origin;
-    if (!isSameOriginRequest(request.headers.get('origin'), expectedOrigin)) {
+    const isTrustedRequest =
+      isSameOriginRequest(request.headers.get('origin'), expectedOrigin) ||
+      isTrustedSameOriginForm(
+        request.headers.get('origin'),
+        expectedOrigin,
+        request.headers.get('sec-fetch-site'),
+        request.headers.get('content-type'),
+      );
+    if (!isTrustedRequest) {
       return NextResponse.json(
         { error: 'Request is unavailable' },
         { status: 403, headers: { 'Cache-Control': 'no-store, private' } },

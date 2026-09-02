@@ -3,7 +3,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { parseSecurityConfig } from './config';
 import { redactLogFields, writeSecurityLog } from './logging';
 import { checkRateLimit, resetRateLimitsForTests } from './rate-limit';
-import { isJsonRequest, isSameOriginRequest, readLimitedJson } from './request';
+import {
+  isJsonRequest,
+  isSameOriginRequest,
+  isTrustedSameOriginForm,
+  readLimitedJson,
+} from './request';
 
 describe('web security boundaries', () => {
   beforeEach(resetRateLimitsForTests);
@@ -18,6 +23,42 @@ describe('web security boundaries', () => {
     expect(isSameOriginRequest(null, 'https://care.example')).toBe(false);
     expect(isJsonRequest('application/json; charset=utf-8')).toBe(true);
     expect(isJsonRequest('text/plain')).toBe(false);
+  });
+
+  it('accepts an origin-less same-origin browser form without weakening other requests', () => {
+    const formContentType = 'application/x-www-form-urlencoded; charset=utf-8';
+    expect(
+      isTrustedSameOriginForm(
+        null,
+        'http://localhost:3000',
+        'same-origin',
+        formContentType,
+      ),
+    ).toBe(true);
+    expect(
+      isTrustedSameOriginForm(
+        'https://evil.example',
+        'http://localhost:3000',
+        'cross-site',
+        formContentType,
+      ),
+    ).toBe(false);
+    expect(
+      isTrustedSameOriginForm(
+        null,
+        'http://localhost:3000',
+        'cross-site',
+        formContentType,
+      ),
+    ).toBe(false);
+    expect(
+      isTrustedSameOriginForm(
+        null,
+        'http://localhost:3000',
+        'same-origin',
+        'application/json',
+      ),
+    ).toBe(false);
   });
 
   it('rejects oversized declared and streamed JSON bodies', async () => {

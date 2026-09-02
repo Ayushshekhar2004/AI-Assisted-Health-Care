@@ -1,7 +1,11 @@
-import { signUpAction } from '../actions';
 import { AuthForm } from '../auth-form';
 
-export default function SignUpPage() {
+type SignUpPageProps = Readonly<{
+  searchParams: Promise<{ error?: string }>;
+}>;
+
+export default async function SignUpPage({ searchParams }: SignUpPageProps) {
+  const params = await searchParams;
   return (
     <main className="auth-card">
       <h1>Create a patient account</h1>
@@ -9,7 +13,7 @@ export default function SignUpPage() {
         Development registration uses email. Use synthetic information in
         non-production systems.
       </p>
-      <AuthForm action={signUpAction} mode="sign-up" />
+      <AuthForm error={params.error === '1'} mode="sign-up" />
     </main>
   );
 }
