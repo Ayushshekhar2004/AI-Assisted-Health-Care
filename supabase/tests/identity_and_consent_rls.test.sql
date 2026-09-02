@@ -346,7 +346,7 @@ select is_empty(
   'patient cannot update another patient record'
 );
 
-select results_eq(
+select throws_ok(
   $$
     insert into public.consent_records (patient_id, consent_type, status, policy_version)
     values (
@@ -355,10 +355,10 @@ select results_eq(
       'granted',
       'synthetic-v1'
     )
-    returning status::text
   $$,
-  $$ values ('granted') $$,
-  'patient can append own consent decision'
+  '42501',
+  'permission denied for table consent_records',
+  'patient cannot bypass the version-validated consent decision function'
 );
 
 select throws_ok(
@@ -372,8 +372,8 @@ select throws_ok(
     )
   $$,
   '42501',
-  'new row violates row-level security policy for table "consent_records"',
-  'patient cannot append consent for another patient'
+  'permission denied for table consent_records',
+  'patient cannot directly append consent for another patient'
 );
 
 select throws_ok(

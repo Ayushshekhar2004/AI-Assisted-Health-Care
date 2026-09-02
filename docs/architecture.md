@@ -96,3 +96,18 @@ completed consultation with a recorded follow-up-required outcome. Patient reboo
 the opaque recommendation link, recommending doctor, and timing category. It creates a new requested
 appointment and deliberately does not attach the previous intake, consultation note, outcome, or
 prescription; the patient must provide current context for the new encounter.
+
+The `audit` module is the application boundary for content-free security events. Application code
+uses its strict action/target schema and server-only recorder; authenticated callers can emit only
+the narrow self/admin events authorized by the database function. Clinical and scheduling database
+transactions retain atomic audit writes to the same centralized, immutable `audit_events` sink.
+Consent inserts are audited by a database trigger so direct patient grants and withdrawals cannot
+bypass the event. Audit records contain only actor UUID, allow-listed action, target type, opaque
+target UUID, outcome, and timestamp—never an arbitrary payload.
+
+The patient privacy center uses the patient module's centralized consent-purpose catalog and current
+policy versions. Decisions are append-only; the latest deterministically ordered row controls future
+use without rewriting historical versions. Revocation is rejected while an active intake,
+teleconsultation, or document scan still depends on that purpose, and a recorded withdrawal blocks
+new processing for that purpose. Operations audit lookup stays within the audit module and exposes
+only paginated, allow-listed event fields over a maximum 31-day range.

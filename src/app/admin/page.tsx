@@ -11,6 +11,9 @@ export default function AdminHomePage() {
       <p>
         <Link href="/admin/doctors">Review doctor verification queue</Link>
       </p>
+      <p>
+        <Link href="/admin/audit">Read-only audit lookup</Link>
+      </p>
       <form action={logoutAction}>
         <button type="submit">Sign out</button>
       </form>

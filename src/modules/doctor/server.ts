@@ -5,6 +5,7 @@ import { z } from 'zod';
 
 import { getSupabaseAdminConfig } from '@/lib/supabase/admin-config';
 import { createClient as createUserClient } from '@/lib/supabase/server';
+import { recordOwnAdminQueueView } from '@/modules/audit';
 
 import {
   doctorVerificationStateSchema,
@@ -99,6 +100,8 @@ export async function listDoctorVerificationQueue(): Promise<
   if (error) {
     throw new Error('Unable to load doctor verification queue');
   }
+
+  await recordOwnAdminQueueView();
 
   return z.array(queueEntrySchema).parse(
     (data ?? []).map((doctor) => ({

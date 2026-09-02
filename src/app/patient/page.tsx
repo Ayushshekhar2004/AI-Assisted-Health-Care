@@ -60,6 +60,9 @@ export default async function PatientHomePage() {
       <p>
         <Link href="/patient/notifications">Notification preferences</Link>
       </p>
+      <p>
+        <Link href="/patient/privacy">Consent and privacy center</Link>
+      </p>
       <form action={logoutAction}>
         <button type="submit">Sign out</button>
       </form>

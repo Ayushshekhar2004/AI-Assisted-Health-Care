@@ -11,6 +11,7 @@ import {
   SupabaseAuthAdapter,
   type ProfileRole,
 } from '@/modules/auth';
+import { recordOwnLoginRoleAnomaly } from '@/modules/audit';
 
 export type AuthActionState = Readonly<{
   message: string;
@@ -55,6 +56,7 @@ export async function loginAction(
   }
 
   if (!role) {
+    await recordOwnLoginRoleAnomaly().catch(() => undefined);
     try {
       await adapter.signOut();
     } catch {

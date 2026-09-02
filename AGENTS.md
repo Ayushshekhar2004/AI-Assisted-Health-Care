@@ -82,3 +82,8 @@ You are implementing exactly one task in an existing healthcare application.
 Implement ONLY the task below:
 <PASTE THE DAY TASK HERE>
 ```
+
+## Notification on task completion
+
+When you completely finish a requested task, run:
+osascript -e 'display notification "Codex task finished" with title "Codex"' && afplay /System/Library/Sounds/Glass.aiff

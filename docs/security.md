@@ -26,6 +26,23 @@ Audit sensitive access and mutation using an actor identifier, action, target ty
 identifier, result, and timestamp. An audit record must not duplicate patient content or clinical
 details.
 
+Audit events are append-only and browser roles have no direct table access. The centralized audit
+service rejects arbitrary actions, mismatched target types, actor spoofing, and payload fields.
+Recorded categories include available authenticated login-role anomalies, consent grant/withdrawal,
+doctor verification and administrative queue access, appointment transitions, assigned record
+views, document authorization/access, and clinician finalization actions. Failed credential attempts
+without an authenticated actor are intentionally not stored because retaining an email, credential,
+IP address, or other identifying payload would violate the content-free audit boundary; those events
+belong in separately approved identity-provider security telemetry.
+
+Patients may read only their own consent history and append decisions for centrally versioned AI
+intake, teleconsultation, and document-processing purposes. Policy versions are server-controlled;
+the browser cannot choose one. Withdrawal does not erase prior records and cannot interrupt an
+active safety or care workflow, but it blocks new processing after that workflow ends. Operations
+users may query only content-free audit fields through a server-authorized, read-only, paginated
+function. The lookup enforces categorical filters, opaque UUID filters, bounded result size, and a
+maximum 31-day range, and every successful lookup is itself audited.
+
 ## Logging and observability
 
 Never log raw patient or clinician content, including:

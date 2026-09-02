@@ -1,7 +1,18 @@
 export {
   INTAKE_PROCESSING_CONSENT_VERSION,
+  AI_INTAKE_PROCESSING_CONSENT_VERSION,
+  DOCUMENT_PROCESSING_CONSENT_VERSION,
   TELECONSULTATION_CONSENT_VERSION,
 } from './consent-versions';
+export {
+  consentDecisionInputSchema,
+  consentDecisionSchema,
+  consentPurposeLabels,
+  consentVersions,
+  managedConsentPurposeSchema,
+  patientConsentRecordSchema,
+} from './consent';
+export type { ManagedConsentPurpose, PatientConsentRecord } from './consent';
 export { parsePatientOnboarding } from './onboarding-validation';
 export type { PatientOnboardingInput } from './onboarding-validation';
 export {

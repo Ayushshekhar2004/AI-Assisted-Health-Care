@@ -9,6 +9,7 @@ import {
   getRoleHome,
   getSafeRedirectPath,
 } from '@/modules/auth';
+import { recordOwnLoginRoleAnomaly } from '@/modules/audit';
 
 const callbackSchema = z.object({
   code: z.string().min(1).max(4096),
@@ -38,6 +39,7 @@ export async function GET(request: NextRequest) {
       if (role) {
         destination = getSafeRedirectPath(parsed.data.next, getRoleHome(role));
       } else {
+        await recordOwnLoginRoleAnomaly().catch(() => undefined);
         await supabase.auth.signOut();
       }
     }
